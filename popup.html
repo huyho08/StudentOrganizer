@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f7fa;
+      padding: 0;
+      margin: 0;
+      min-width: 320px;
+    }
+    .container {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      margin: 18px;
+      padding: 22px 18px 18px 18px;
+    }
+    h2 {
+      text-align: center;
+      color: #2d6cdf;
+      margin-bottom: 18px;
+      letter-spacing: 1px;
+    }
+    label {
+      margin-top: 14px;
+      margin-bottom: 4px;
+      display: block;
+      color: #444;
+      font-weight: 500;
+      font-size: 15px;
+    }
+    input, select, textarea {
+      width: 100%;
+      margin: 5px 0 12px 0;
+      padding: 9px 10px;
+      border: 1px solid #dbeafe;
+      border-radius: 7px;
+      font-size: 15px;
+      background: #f8fafc;
+      transition: border 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border: 1.5px solid #2d6cdf;
+      outline: none;
+      background: #fff;
+    }
+    .row {
+      display: flex;
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+    .row > * {
+      flex: 1;
+    }
+    button {
+      padding: 11px;
+      width: 100%;
+      margin-top: 10px;
+      background: linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(45,108,223,0.07);
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #1e4fa3 60%, #3e8be0 100%);
+      box-shadow: 0 4px 16px rgba(45,108,223,0.13);
+    }
+    #deadlineList {
+      margin-top: 8px;
+      margin-bottom: 10px;
+      min-height: 20px;
+    }
+    #deadlineList div {
+      background: #eaf1fb;
+      color: #2d6cdf;
+      border-radius: 5px;
+      padding: 5px 10px;
+      margin-bottom: 4px;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+    }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      margin-top: 12px;
+      gap: 7px;
+    }
+    #reminderToggle {
+      accent-color: #2d6cdf;
+      width: 18px;
+      height: 18px;
+    }
+    /* Google Calendar input styling */
+    .gcal-row {
+      margin-top: 18px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .gcal-row input {
+      font-size: 14px;
+      padding: 7px 10px;
+    }
+    .gcal-label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Student Organizer</h2>
+
+    <label>Add Event</label>
+    <input id="eventTitle" placeholder="Event Title">
+    <div class="row">
+      <select id="eventYear"></select>
+      <select id="eventMonth"></select>
+      <select id="eventDay"></select>
+    </div>
+    <div class="row">
+      <select id="eventHour"></select>
+      <select id="eventMinute"></select>
+    </div>
+    <button id="addEventBtn">Add Event to Calendar</button>
+
+    <label>Deadlines</label>
+    <input id="deadlineInput" placeholder="Deadline description">
+    <div class="row">
+      <input id="deadlineDate" type="date">
+      <input id="deadlineTime" type="time">
+    </div>
+    <button id="addDeadlineBtn">Add Deadline</button>
+    <div id="deadlineList"></div>
+
+    <div class="toggle-row">
+      <input type="checkbox" id="reminderToggle">
+      <label for="reminderToggle" style="margin:0; font-size:14px;">Toggle Reminders</label>
+    </div>
+
+    <div class="gcal-row">
+      <span class="gcal-label">Google Calendar Client ID</span>
+      <input id="gcalClientId" type="text" placeholder="Paste your Google Client ID here">
+      <button id="saveGcalBtn">Save Client ID</button>
+    </div>
+
+    <label>Task List</label>
+    <div class="row">
+      <input id="taskInput" placeholder="New task">
+      <select id="taskType" style="width:auto;min-width:90px;">
+        <option value="personal">Personal</option>
+        <option value="school">School</option>
+      </select>
+      <button id="addTaskBtn" style="width:auto;min-width:70px;">Add</button>
+    </div>
+    <div>
+      <h4 style="margin-bottom:4px;margin-top:10px;color:#2d6cdf;">Personal Tasks</h4>
+      <div class="row" style="margin-bottom:6px;">
+        <label for="personalSort" style="margin:0;font-size:13px;">Sort:</label>
+        <select id="personalSort" style="width:auto;min-width:90px;">
+          <option value="default">Default</option>
+          <option value="az">A-Z</option>
+          <option value="za">Z-A</option>
+        </select>
+      </div>
+      <div id="personalTaskList"></div>
+      <h4 style="margin-bottom:4px;margin-top:14px;color:#2d6cdf;">School Tasks</h4>
+      <div class="row" style="margin-bottom:6px;">
+        <label for="schoolSort" style="margin:0;font-size:13px;">Sort:</label>
+        <select id="schoolSort" style="width:auto;min-width:90px;">
+          <option value="default">Default</option>
+          <option value="az">A-Z</option>
+          <option value="za">Z-A</option>
+        </select>
+      </div>
+      <div id="schoolTaskList"></div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
