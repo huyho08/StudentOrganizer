@@ -1,3 +1,31 @@
+// --- Deadline storage and display helpers ---
+function saveDeadline(text, date) {
+  try {
+    const deadlines = JSON.parse(localStorage.getItem('deadlines') || '[]');
+    deadlines.push({ text, date });
+    localStorage.setItem('deadlines', JSON.stringify(deadlines));
+    showCustomPopup('Deadline added!');
+  } catch (e) {
+    console.error('Failed to save deadline:', e);
+    showCustomPopup('Error saving deadline.', 'error');
+  }
+}
+
+function loadDeadlines() {
+  try {
+    const deadlineList = document.getElementById('deadlineList');
+    const deadlines = JSON.parse(localStorage.getItem('deadlines') || '[]');
+    if (deadlineList) deadlineList.innerHTML = '';
+    deadlines.forEach(deadline => {
+      const div = document.createElement('div');
+      div.textContent = `${deadline.text} (${new Date(deadline.date).toLocaleString()})`;
+      if (deadlineList) deadlineList.appendChild(div);
+    });
+  } catch (e) {
+    console.error('Failed to load deadlines:', e);
+    showCustomPopup('Error loading deadlines.', 'error');
+  }
+}
 document.addEventListener('DOMContentLoaded', () => {
   // --- Event Add Logic (datetime-local input) ---
   const addEventBtn = document.getElementById('addEventBtn');
