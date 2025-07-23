@@ -1,17 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // --- Event Add Logic ---
+  // --- Event Add Logic (datetime-local input) ---
   const addEventBtn = document.getElementById('addEventBtn');
-  if (addEventBtn) {
+  const eventDateTimeInput = document.getElementById('eventDateTime');
+  if (addEventBtn && eventDateTimeInput) {
     addEventBtn.addEventListener('click', async () => {
       try {
         const title = document.getElementById('eventTitle').value;
-        const year = document.getElementById('eventYear').value;
-        const month = document.getElementById('eventMonth').value;
-        const day = document.getElementById('eventDay').value;
-        const hour = document.getElementById('eventHour').value;
-        const minute = document.getElementById('eventMinute').value;
-        const dateTime = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour}:${minute}`;
-        if (!title) {
+        const dateTime = eventDateTimeInput.value;
+        if (!title || !dateTime) {
           showCustomPopup('Please fill out all fields.', 'error');
           return;
         }
