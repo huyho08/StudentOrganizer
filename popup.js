@@ -1,4 +1,4 @@
-// --- Deadline storage and display helpers ---
+// --- Deadline storage and display  ---
 function saveDeadline(text, date) {
   try {
     const deadlines = JSON.parse(localStorage.getItem('deadlines') || '[]');
