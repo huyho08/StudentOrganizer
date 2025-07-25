@@ -1,6 +1,6 @@
-# Innovative Solutions
+# StudentOrganizer
 
-**Innovative Solutions** is an all-in-one student organizer helper designed to boost productivity and keep students on track. This Chrome extension helps you manage events, deadlines, and reminders all in one convenient place within your browser.
+**StudentOrganizer** is an all-in-one student organizer helper designed to boost productivity and keep students on track. This Chrome extension helps you manage events, deadlines, and reminders all in one convenient place within your browser.
 
 ## Features
 
@@ -23,7 +23,7 @@ To test or load the extension locally in Chrome:
 3. **Enable Developer Mode:**
    Toggle the switch in the top right corner of the Extensions page.
 
-4. **Load the Innovative Solutions Extension:**
+4. **Load the StudentOrganizer Extension:**
    Click the **Load unpacked** button and select the folder where your extension files are extracted.
 
 
