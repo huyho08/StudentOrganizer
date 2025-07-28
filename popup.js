@@ -236,8 +236,24 @@ document.addEventListener('DOMContentLoaded', () => {
   if (reminderToggle && chrome.storage && chrome.storage.local) {
     // Always sync toggle state from chrome.storage.local on load
     chrome.storage.local.get(['reminderToggle'], (result) => {
-      // Default to true if not set
-      reminderToggle.checked = result.reminderToggle !== false;
+      // If not set, force ON by default and save to storage
+      if (typeof result.reminderToggle === 'undefined' || result.reminderToggle === null) {
+        reminderToggle.checked = true;
+        chrome.storage.local.set({ reminderToggle: true });
+      } else {
+        reminderToggle.checked = !!result.reminderToggle;
+      }
+    });
+    // Listen for changes in chrome.storage.local from other extension contexts
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'local' && changes.reminderToggle && reminderToggle) {
+        if (typeof changes.reminderToggle.newValue === 'undefined' || changes.reminderToggle.newValue === null) {
+          reminderToggle.checked = true;
+          chrome.storage.local.set({ reminderToggle: true });
+        } else {
+          reminderToggle.checked = !!changes.reminderToggle.newValue;
+        }
+      }
     });
     reminderToggle.addEventListener('change', () => {
       chrome.storage.local.set({ reminderToggle: reminderToggle.checked });
