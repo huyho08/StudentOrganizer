@@ -68,6 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (deadline && date && time) {
           const dateTime = `${date}T${time}`;
           saveDeadline(deadline, dateTime);
+          // Sync deadlines to chrome.storage.local for background.js
+          const deadlines = JSON.parse(localStorage.getItem('deadlines') || '[]');
+          chrome.storage.local.set({ deadlines });
           loadDeadlines();
           deadlineInput.value = '';
           deadlineDateInput.value = '';
@@ -231,13 +234,71 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Reminder toggle logic ---
   const reminderToggle = document.getElementById('reminderToggle');
   if (reminderToggle && chrome.storage && chrome.storage.local) {
+    // Always sync toggle state from chrome.storage.local on load
     chrome.storage.local.get(['reminderToggle'], (result) => {
+      // Default to true if not set
       reminderToggle.checked = result.reminderToggle !== false;
     });
     reminderToggle.addEventListener('change', () => {
       chrome.storage.local.set({ reminderToggle: reminderToggle.checked });
     });
   }
+
+  // --- Show reminder popup on new tab if enabled ---
+  function showDeadlineReminderIfNeeded() {
+    if (!reminderToggle) return;
+    chrome.storage.local.get(['reminderToggle'], (result) => {
+      const remindersEnabled = result.reminderToggle !== false;
+      if (!remindersEnabled) return;
+      const deadlines = JSON.parse(localStorage.getItem('deadlines') || '[]');
+      if (!deadlines.length) return;
+      const now = new Date();
+      let closest = null;
+      let minDiff = Infinity;
+      deadlines.forEach(d => {
+        if (!d.date) return;
+        const diff = new Date(d.date) - now;
+        if (diff >= 0 && diff < minDiff) {
+          minDiff = diff;
+          closest = d;
+        }
+      });
+      if (closest) {
+        // Only show if in new tab or extension popup
+        const isNewTab = (
+          window.location.href.startsWith('chrome://newtab') ||
+          window.location.href.startsWith('about:newtab') ||
+          window.location.protocol === 'chrome-extension:'
+        );
+        if (isNewTab) {
+          // Show custom popup as before
+          showCustomPopup(
+            `Upcoming deadline: ${escapeHtml(closest.text)} (${new Date(closest.date).toLocaleString()})`,
+            'info'
+          );
+          // Also show system notification if supported
+          if (window.Notification && Notification.permission === 'granted') {
+            new Notification('Upcoming deadline', {
+              body: `${closest.text} (${new Date(closest.date).toLocaleString()})`,
+              icon: 'icon.png'
+            });
+          } else if (window.Notification && Notification.permission !== 'denied') {
+            Notification.requestPermission().then(permission => {
+              if (permission === 'granted') {
+                new Notification('Upcoming deadline', {
+                  body: `${closest.text} (${new Date(closest.date).toLocaleString()})`,
+                  icon: 'icon.png'
+                });
+              }
+            });
+          }
+        }
+      }
+    });
+  }
+
+  // Call after toggle and deadlines loaded
+  setTimeout(showDeadlineReminderIfNeeded, 200);
 });
 
 // Custom visually appealing popup system
