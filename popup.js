@@ -207,65 +207,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial load
   loadTasks();
 
-  // --- Deadline/Reminder logic ---
-  loadDeadlines();
-  populateDateTimeDropdowns();
-  showDeadlineReminderIfNeeded();
-
-  // Google Calendar Client ID save/load
-  const gcalInput = document.getElementById('gcalClientId');
-  const gcalBtn = document.getElementById('saveGcalBtn');
-  if (gcalInput) {
-    const savedId = localStorage.getItem('gcalClientId');
-    if (savedId) gcalInput.value = savedId;
-  }
-  if (gcalBtn) {
-    gcalBtn.addEventListener('click', () => {
-      const val = gcalInput && gcalInput.value ? gcalInput.value.trim() : '';
-      if (val) {
-        localStorage.setItem('gcalClientId', val);
-        showCustomPopup('Google Calendar Client ID saved!');
-      } else {
-        showCustomPopup('Please enter a valid Client ID.', 'error');
-      }
-    });
-  }
-
   // --- Reminder toggle logic ---
   const reminderToggle = document.getElementById('reminderToggle');
-  if (reminderToggle && chrome.storage && chrome.storage.local) {
-    // Always sync toggle state from chrome.storage.local on load
-    chrome.storage.local.get(['reminderToggle'], (result) => {
-      // If not set, force ON by default and save to storage
-      if (typeof result.reminderToggle === 'undefined' || result.reminderToggle === null) {
-        reminderToggle.checked = true;
-        chrome.storage.local.set({ reminderToggle: true });
-      } else {
-        reminderToggle.checked = !!result.reminderToggle;
-      }
-    });
-    // Listen for changes in chrome.storage.local from other extension contexts
-    chrome.storage.onChanged.addListener((changes, area) => {
-      if (area === 'local' && changes.reminderToggle && reminderToggle) {
-        if (typeof changes.reminderToggle.newValue === 'undefined' || changes.reminderToggle.newValue === null) {
-          reminderToggle.checked = true;
-          chrome.storage.local.set({ reminderToggle: true });
-        } else {
-          reminderToggle.checked = !!changes.reminderToggle.newValue;
-        }
-      }
-    });
-    reminderToggle.addEventListener('change', () => {
-      chrome.storage.local.set({ reminderToggle: reminderToggle.checked });
-    });
-  }
-
   // --- Show reminder popup on new tab if enabled ---
   function showDeadlineReminderIfNeeded() {
     if (!reminderToggle) return;
     chrome.storage.local.get(['reminderToggle'], (result) => {
-      const remindersEnabled = result.reminderToggle !== false;
-      if (!remindersEnabled) return;
+      // Treat undefined/null as enabled (default ON)
+      const remindersEnabled = (typeof result.reminderToggle === 'undefined' || result.reminderToggle === null) ? true : !!result.reminderToggle;
+      if (!remindersEnabled) {
+        return;
+      }
       const deadlines = JSON.parse(localStorage.getItem('deadlines') || '[]');
       if (!deadlines.length) return;
       const now = new Date();
@@ -280,13 +232,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
       if (closest) {
-        // Only show if in new tab or extension popup
-        const isNewTab = (
-          window.location.href.startsWith('chrome://newtab') ||
-          window.location.href.startsWith('about:newtab') ||
-          window.location.protocol === 'chrome-extension:'
+        // Only show on actual browser tabs (not extension popup or new tab)
+        const isRealTab = (
+          window.location.protocol === 'http:' ||
+          window.location.protocol === 'https:' ||
+          window.location.protocol === 'file:'
         );
-        if (isNewTab) {
+        if (isRealTab) {
           // Show custom popup as before
           showCustomPopup(
             `Upcoming deadline: ${escapeHtml(closest.text)} (${new Date(closest.date).toLocaleString()})`,
@@ -310,6 +262,51 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       }
+    });
+  }
+
+  // Google Calendar Client ID save/load
+  const gcalInput = document.getElementById('gcalClientId');
+  const gcalBtn = document.getElementById('saveGcalBtn');
+  if (gcalInput) {
+    const savedId = localStorage.getItem('gcalClientId');
+    if (savedId) gcalInput.value = savedId;
+  }
+  if (gcalBtn && gcalInput) {
+    gcalBtn.addEventListener('click', () => {
+      const val = gcalInput.value ? gcalInput.value.trim() : '';
+      if (val) {
+        localStorage.setItem('gcalClientId', val);
+        showCustomPopup('Google Calendar Client ID saved!');
+      } else {
+        showCustomPopup('Please enter a valid Client ID.', 'error');
+      }
+    });
+  }
+
+  if (reminderToggle && chrome.storage && chrome.storage.local) {
+    // Always sync toggle state from chrome.storage.local on load
+    chrome.storage.local.get(['reminderToggle'], (result) => {
+      if (typeof result.reminderToggle === 'undefined' || result.reminderToggle === null) {
+        reminderToggle.checked = true;
+        chrome.storage.local.set({ reminderToggle: true });
+      } else {
+        reminderToggle.checked = !!result.reminderToggle;
+      }
+    });
+    // Listen for changes in chrome.storage.local from other extension contexts
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'local' && changes.reminderToggle && reminderToggle) {
+        if (typeof changes.reminderToggle.newValue === 'undefined' || changes.reminderToggle.newValue === null) {
+          reminderToggle.checked = true;
+          chrome.storage.local.set({ reminderToggle: true });
+        } else {
+          reminderToggle.checked = !!changes.reminderToggle.newValue;
+        }
+      }
+    });
+    reminderToggle.addEventListener('change', () => {
+      chrome.storage.local.set({ reminderToggle: reminderToggle.checked });
     });
   }
 
@@ -338,18 +335,18 @@ function showCustomPopup(message, type = 'info') {
       ? 'linear-gradient(90deg, #e74c3c 60%, #ff7675 100%)'
       : 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
     popup.style.color = '#fff';
-    popup.style.padding = '18px 32px 16px 24px';
-    popup.style.borderRadius = '12px';
-    popup.style.boxShadow = '0 4px 16px rgba(45,108,223,0.13)';
-    popup.style.fontSize = '16px';
+    popup.style.padding = '28px 48px 24px 36px';
+    popup.style.borderRadius = '16px';
+    popup.style.boxShadow = '0 8px 32px rgba(45,108,223,0.18)';
+    popup.style.fontSize = '22px';
     popup.style.fontFamily = 'Segoe UI, Arial, sans-serif';
-    popup.style.fontWeight = '500';
-    popup.style.maxWidth = '340px';
+    popup.style.fontWeight = '600';
+    popup.style.maxWidth = '480px';
     popup.style.pointerEvents = 'auto';
     popup.style.transition = 'opacity 0.3s';
     popup.style.display = 'flex';
     popup.style.alignItems = 'center';
-    popup.style.gap = '12px';
+    popup.style.gap = '18px';
 
     // Close button
     const closeBtn = document.createElement('button');
