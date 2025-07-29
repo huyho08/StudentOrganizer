@@ -309,8 +309,8 @@ function showCustomPopup(message, type = 'info') {
     popup.id = 'student-organizer-popup';
     // Place popup at bottom right of the whole screen (viewport)
     popup.style.position = 'fixed';
-    popup.style.bottom = '30px';
-    popup.style.right = '30px';
+    popup.style.bottom = '24px';
+    popup.style.right = '24px';
     popup.style.left = 'auto';
     popup.style.top = 'auto';
     popup.style.transform = 'none';
@@ -319,18 +319,18 @@ function showCustomPopup(message, type = 'info') {
       ? 'linear-gradient(90deg, #e74c3c 60%, #ff7675 100%)'
       : 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
     popup.style.color = '#fff';
-    popup.style.padding = '28px 48px 24px 36px';
-    popup.style.borderRadius = '16px';
-    popup.style.boxShadow = '0 8px 32px rgba(45,108,223,0.18)';
-    popup.style.fontSize = '22px';
+    popup.style.padding = '8px 14px';
+    popup.style.borderRadius = '8px';
+    popup.style.boxShadow = '0 4px 16px rgba(45,108,223,0.13)';
+    popup.style.fontSize = '15px';
     popup.style.fontFamily = 'Segoe UI, Arial, sans-serif';
-    popup.style.fontWeight = '600';
-    popup.style.maxWidth = '480px';
+    popup.style.fontWeight = '500';
+    popup.style.maxWidth = '200px';
     popup.style.pointerEvents = 'auto';
     popup.style.transition = 'opacity 0.3s';
     popup.style.display = 'flex';
     popup.style.alignItems = 'center';
-    popup.style.gap = '18px';
+    popup.style.gap = '10px';
 
     // Close button
     const closeBtn = document.createElement('button');
