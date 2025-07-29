@@ -134,6 +134,16 @@ document.addEventListener('DOMContentLoaded', () => {
           div.style.borderRadius = '5px';
           div.style.marginBottom = '5px';
           div.style.padding = '6px 10px';
+          div.style.transition = 'box-shadow 0.2s, transform 0.2s';
+          div.style.boxShadow = '0 0 0 rgba(45,108,223,0)';
+          div.onmouseenter = () => {
+            div.style.boxShadow = '0 2px 12px rgba(45,108,223,0.10)';
+            div.style.transform = 'scale(1.03)';
+          };
+          div.onmouseleave = () => {
+            div.style.boxShadow = '0 0 0 rgba(45,108,223,0)';
+            div.style.transform = 'scale(1)';
+          };
           div.innerHTML = `<span>${escapeHtml(obj.text)}</span>`;
           let delBtn = document.createElement('button');
           delBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#e74c3c"/><line x1="4.5" y1="4.5" x2="9.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
@@ -144,20 +154,34 @@ document.addEventListener('DOMContentLoaded', () => {
           delBtn.style.cursor = 'pointer';
           delBtn.style.display = 'flex';
           delBtn.style.alignItems = 'center';
-          delBtn.onmouseover = () => { delBtn.style.transform = 'scale(1.15)'; };
-          delBtn.onmouseout = () => { delBtn.style.transform = 'scale(1)'; };
+          delBtn.style.transition = 'transform 0.18s cubic-bezier(.4,2,.3,1)';
+          delBtn.onmouseover = () => { delBtn.style.transform = 'scale(1.25) rotate(-10deg)'; };
+          delBtn.onmouseout = () => { delBtn.style.transform = 'scale(1) rotate(0)'; };
           delBtn.onclick = () => {
-            let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-            let idx = tasks.findIndex(t => (typeof t === 'string' ? t === obj.text : t.text === obj.text && (t.type || type) === (obj.type || type)));
-            if (idx > -1) {
-              tasks.splice(idx, 1);
-              localStorage.setItem('tasks', JSON.stringify(tasks));
-              loadTasks();
-              showCustomPopup('Task deleted.');
-            }
+            div.style.transition = 'transform 0.25s cubic-bezier(.4,2,.3,1), opacity 0.25s';
+            div.style.transform = 'scale(0.7)';
+            div.style.opacity = '0';
+            setTimeout(() => {
+              let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+              let idx = tasks.findIndex(t => (typeof t === 'string' ? t === obj.text : t.text === obj.text && (t.type || type) === (obj.type || type)));
+              if (idx > -1) {
+                tasks.splice(idx, 1);
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+                loadTasks();
+                showCustomPopup('Task deleted.');
+              }
+            }, 180);
           };
           div.appendChild(delBtn);
-          if (list) list.appendChild(div);
+          if (list) {
+            div.style.opacity = '0';
+            div.style.transform = 'scale(0.7)';
+            list.appendChild(div);
+            setTimeout(() => {
+              div.style.opacity = '1';
+              div.style.transform = 'scale(1)';
+            }, 10);
+          }
         });
       }
       renderTaskList(personalTaskList, personal, 'personal');
@@ -313,7 +337,8 @@ function showCustomPopup(message, type = 'info') {
     popup.style.right = '24px';
     popup.style.left = 'auto';
     popup.style.top = 'auto';
-    popup.style.transform = 'none';
+    popup.style.transform = 'translateY(30px) scale(0.95)';
+    popup.style.opacity = '0';
     popup.style.zIndex = 2147483647; // highest z-index to ensure visibility
     popup.style.background = type === 'error'
       ? 'linear-gradient(90deg, #e74c3c 60%, #ff7675 100%)'
@@ -327,7 +352,7 @@ function showCustomPopup(message, type = 'info') {
     popup.style.fontWeight = '500';
     popup.style.maxWidth = '200px';
     popup.style.pointerEvents = 'auto';
-    popup.style.transition = 'opacity 0.3s';
+    popup.style.transition = 'opacity 0.3s, transform 0.4s cubic-bezier(.4,2,.3,1)';
     popup.style.display = 'flex';
     popup.style.alignItems = 'center';
     popup.style.gap = '10px';
@@ -344,7 +369,13 @@ function showCustomPopup(message, type = 'info') {
     closeBtn.style.lineHeight = '1';
     closeBtn.style.padding = '0 8px 0 0';
     closeBtn.setAttribute('aria-label', 'Close popup');
-    closeBtn.onclick = () => popup.remove();
+    closeBtn.onmouseenter = () => closeBtn.style.transform = 'scale(1.3) rotate(10deg)';
+    closeBtn.onmouseleave = () => closeBtn.style.transform = 'scale(1) rotate(0)';
+    closeBtn.onclick = () => {
+      popup.style.opacity = '0';
+      popup.style.transform = 'translateY(30px) scale(0.95)';
+      setTimeout(() => popup.remove(), 350);
+    };
 
     // Icon
     const icon = document.createElement('span');
@@ -360,9 +391,15 @@ function showCustomPopup(message, type = 'info') {
     popup.appendChild(closeBtn);
 
     document.body.appendChild(popup);
-
+    // Animate in
     setTimeout(() => {
-      popup.style.opacity = '0.0';
+      popup.style.opacity = '1';
+      popup.style.transform = 'translateY(0) scale(1)';
+    }, 10);
+    // Animate out
+    setTimeout(() => {
+      popup.style.opacity = '0';
+      popup.style.transform = 'translateY(30px) scale(0.95)';
       setTimeout(() => popup.remove(), 400);
     }, 4000);
   } catch (e) {
