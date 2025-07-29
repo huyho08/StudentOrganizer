@@ -1,33 +1,59 @@
+// Outlook Calendar (Microsoft Graph API) integration
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.action === 'createEvent') {
-    const token = await new Promise(resolve => chrome.identity.getAuthToken({ interactive: true }, resolve));
-    const event = {
-      summary: message.title,
-      start: { dateTime: new Date(message.dateTime).toISOString() },
-      end: { dateTime: new Date(new Date(message.dateTime).getTime() + 60 * 60 * 1000).toISOString() },
-      reminders: {
-        useDefault: false,
-        overrides: [{ method: 'popup', minutes: 10 }]
+    // 1. Get Microsoft access token using chrome.identity.launchWebAuthFlow
+    const clientId = 'YOUR_AZURE_APP_CLIENT_ID'; // Replace with your Azure app's client ID
+    const redirectUri = chrome.identity.getRedirectURL('oauth2');
+    const scopes = 'openid profile offline_access Calendars.ReadWrite';
+    const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+
+    chrome.identity.launchWebAuthFlow({
+      url: authUrl,
+      interactive: true
+    }, async (redirectResponse) => {
+      if (chrome.runtime.lastError || !redirectResponse) {
+        sendResponse({ success: false, error: 'Auth failed' });
+        return;
       }
-    };
+      // Extract access token from redirectResponse
+      const m = redirectResponse.match(/[#&]access_token=([^&]*)/);
+      if (!m) {
+        sendResponse({ success: false, error: 'No access token' });
+        return;
+      }
+      const accessToken = m[1];
 
-    fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(event)
-    })
-    .then(response => response.json())
-    .then(data => {
-      sendResponse({ success: true, data });
-    })
-    .catch(error => {
-      console.error(error);
-      sendResponse({ success: false });
+      // 2. Create event in Outlook Calendar using Microsoft Graph API
+      const event = {
+        subject: message.title,
+        start: {
+          dateTime: new Date(message.dateTime).toISOString(),
+          timeZone: 'UTC'
+        },
+        end: {
+          dateTime: new Date(new Date(message.dateTime).getTime() + 60 * 60 * 1000).toISOString(),
+          timeZone: 'UTC'
+        }
+      };
+
+      fetch('https://graph.microsoft.com/v1.0/me/events', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(event)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.id) sendResponse({ success: true, data });
+        else sendResponse({ success: false, error: data });
+      })
+      .catch(error => {
+        console.error(error);
+        sendResponse({ success: false, error });
+      });
     });
-
     return true;
   }
 });

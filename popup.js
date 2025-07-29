@@ -44,8 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
           title,
           dateTime
         }, response => {
-          if (response && response.success) showCustomPopup('Event added to Google Calendar!');
-          else showCustomPopup('Failed to add event.', 'error');
+          if (response && response.success) showCustomPopup('Event added to Outlook Calendar!');
+          else showCustomPopup('Failed to add event to Outlook.', 'error');
         });
       } catch (e) {
         console.error('Failed to add event:', e);
@@ -206,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial load
   loadTasks();
+  loadDeadlines();
 
   // --- Reminder toggle logic ---
   const reminderToggle = document.getElementById('reminderToggle');
@@ -265,24 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Google Calendar Client ID save/load
-  const gcalInput = document.getElementById('gcalClientId');
-  const gcalBtn = document.getElementById('saveGcalBtn');
-  if (gcalInput) {
-    const savedId = localStorage.getItem('gcalClientId');
-    if (savedId) gcalInput.value = savedId;
-  }
-  if (gcalBtn && gcalInput) {
-    gcalBtn.addEventListener('click', () => {
-      const val = gcalInput.value ? gcalInput.value.trim() : '';
-      if (val) {
-        localStorage.setItem('gcalClientId', val);
-        showCustomPopup('Google Calendar Client ID saved!');
-      } else {
-        showCustomPopup('Please enter a valid Client ID.', 'error');
-      }
-    });
-  }
+  // Outlook Calendar integration does not require manual Client ID entry in popup
 
   if (reminderToggle && chrome.storage && chrome.storage.local) {
     // Always sync toggle state from chrome.storage.local on load
