@@ -119,11 +119,31 @@ document.addEventListener('DOMContentLoaded', () => {
           personal.push(obj);
         }
       });
-      // Sorting
-      if (personalSortOrder === 'az') personal.sort((a, b) => a.text.localeCompare(b.text));
-      if (personalSortOrder === 'za') personal.sort((a, b) => b.text.localeCompare(a.text));
-      if (schoolSortOrder === 'az') school.sort((a, b) => a.text.localeCompare(b.text));
-      if (schoolSortOrder === 'za') school.sort((a, b) => b.text.localeCompare(a.text));
+      // --- Automatic keyword-based sorting ---
+      function keywordSort(arr) {
+        // Example: prioritize tasks with 'urgent', 'important', 'due', 'asap', 'today', 'homework', 'exam', 'project', 'assignment'
+        const priorityKeywords = [
+          'urgent', 'important', 'due', 'asap', 'today', 'homework', 'exam', 'project', 'assignment', 'test', 'final', 'midterm', 'submit', 'presentation'
+        ];
+        return arr.slice().sort((a, b) => {
+          const aText = (a.text || '').toLowerCase();
+          const bText = (b.text || '').toLowerCase();
+          const aPriority = priorityKeywords.findIndex(k => aText.includes(k));
+          const bPriority = priorityKeywords.findIndex(k => bText.includes(k));
+          if (aPriority === -1 && bPriority === -1) {
+            // If neither has a keyword, keep original order
+            return 0;
+          } else if (aPriority === -1) {
+            return 1;
+          } else if (bPriority === -1) {
+            return -1;
+          } else {
+            return aPriority - bPriority;
+          }
+        });
+      }
+      personal = keywordSort(personal);
+      school = keywordSort(school);
       function renderTaskList(list, arr, type) {
         arr.forEach(obj => {
           let div = document.createElement('div');
@@ -144,17 +164,23 @@ document.addEventListener('DOMContentLoaded', () => {
             div.style.boxShadow = '0 0 0 rgba(45,108,223,0)';
             div.style.transform = 'scale(1)';
           };
-          div.innerHTML = `<span>${escapeHtml(obj.text)}</span>`;
+          // Task text
+          let textSpan = document.createElement('span');
+          textSpan.textContent = escapeHtml(obj.text);
+          textSpan.style.flex = '1';
+          // Remove button
           let delBtn = document.createElement('button');
-          delBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#e74c3c"/><line x1="4.5" y1="4.5" x2="9.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+          delBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#e74c3c"/><line x1="4.5" y1="4.5" x2="9.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
           delBtn.style.background = 'transparent';
           delBtn.style.border = 'none';
-          delBtn.style.padding = '0 4px';
-          delBtn.style.marginLeft = '6px';
+          delBtn.style.padding = '0 2px';
+          delBtn.style.marginLeft = '8px';
           delBtn.style.cursor = 'pointer';
           delBtn.style.display = 'flex';
           delBtn.style.alignItems = 'center';
           delBtn.style.transition = 'transform 0.18s cubic-bezier(.4,2,.3,1)';
+          delBtn.style.width = '22px';
+          delBtn.style.height = '22px';
           delBtn.onmouseover = () => { delBtn.style.transform = 'scale(1.25) rotate(-10deg)'; };
           delBtn.onmouseout = () => { delBtn.style.transform = 'scale(1) rotate(0)'; };
           delBtn.onclick = () => {
@@ -172,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             }, 180);
           };
+          div.appendChild(textSpan);
           div.appendChild(delBtn);
           if (list) {
             div.style.opacity = '0';
@@ -212,19 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
       taskTypeSelect.value = 'personal';
       loadTasks();
       showCustomPopup('Task added!');
-    });
-  }
-
-  if (personalSort) {
-    personalSort.addEventListener('change', function(e) {
-      personalSortOrder = e.target.value;
-      loadTasks();
-    });
-  }
-  if (schoolSort) {
-    schoolSort.addEventListener('change', function(e) {
-      schoolSortOrder = e.target.value;
-      loadTasks();
     });
   }
 
