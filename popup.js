@@ -119,7 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Task List Logic ---
   const taskInput = document.getElementById('taskInput');
   const addTaskBtn = document.getElementById('addTaskBtn');
-  const taskTypeSelect = document.getElementById('taskType');
   const personalTaskList = document.getElementById('personalTaskList');
   const schoolTaskList = document.getElementById('schoolTaskList');
   // Removed manual sorting dropdowns; sorting will be automatic using keywords.json
@@ -345,25 +344,117 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (addTaskBtn && taskInput && taskTypeSelect) {
+  if (addTaskBtn && taskInput) {
     addTaskBtn.addEventListener('click', () => {
       const text = taskInput.value.trim();
-      const type = taskTypeSelect.value;
       if (!text) {
         showCustomPopup('Please enter a task.','error');
         return;
       }
       let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-      if (tasks.some(t => (typeof t === 'string' ? t === text : t.text === text && (t.type || 'personal') === type))) {
+      if (tasks.some(t => (typeof t === 'string' ? t === text : t.text === text))) {
         showCustomPopup('Task already exists.','error');
         return;
       }
-      tasks.push({ text, type });
-      localStorage.setItem('tasks', JSON.stringify(tasks));
-      taskInput.value = '';
-      taskTypeSelect.value = 'personal';
-      loadTasks();
-      showCustomPopup('Task added!');
+      // Try to auto-sort using keywords.json
+      fetch('keywords.json')
+        .then(res => res.json())
+        .then(keywordsData => {
+          const personalKeywords = Array.isArray(keywordsData.personal) ? keywordsData.personal.map(k => k.toLowerCase()) : [];
+          const schoolKeywords = Array.isArray(keywordsData.school) ? keywordsData.school.map(k => k.toLowerCase()) : [];
+          const lowerText = text.toLowerCase();
+          let type = null;
+          if (personalKeywords.some(k => lowerText.includes(k))) {
+            type = 'personal';
+          } else if (schoolKeywords.some(k => lowerText.includes(k))) {
+            type = 'school';
+          }
+          if (type) {
+            tasks.push({ text, type });
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            taskInput.value = '';
+            loadTasks();
+            showCustomPopup('Task added!');
+          } else {
+            // Prompt user for category if unknown
+            let modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100vw';
+            modal.style.height = '100vh';
+            modal.style.background = 'rgba(0,0,0,0.18)';
+            modal.style.zIndex = 2147483648;
+            modal.style.display = 'flex';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
+            let box = document.createElement('div');
+            box.style.background = '#fff';
+            box.style.borderRadius = '10px';
+            box.style.boxShadow = '0 4px 24px rgba(45,108,223,0.13)';
+            box.style.padding = '28px 32px 22px 32px';
+            box.style.display = 'flex';
+            box.style.flexDirection = 'column';
+            box.style.alignItems = 'center';
+            box.style.gap = '18px';
+            let msg = document.createElement('div');
+            msg.textContent = `Which category should this task belong to?`;
+            msg.style.fontSize = '16px';
+            msg.style.color = '#2d6cdf';
+            msg.style.fontWeight = '600';
+            let taskSpan = document.createElement('div');
+            taskSpan.textContent = `"${text}"`;
+            taskSpan.style.fontSize = '15px';
+            taskSpan.style.color = '#444';
+            taskSpan.style.marginBottom = '8px';
+            let btnRow = document.createElement('div');
+            btnRow.style.display = 'flex';
+            btnRow.style.gap = '18px';
+            let personalBtn = document.createElement('button');
+            personalBtn.textContent = 'Personal';
+            personalBtn.style.background = 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
+            personalBtn.style.color = '#fff';
+            personalBtn.style.border = 'none';
+            personalBtn.style.borderRadius = '7px';
+            personalBtn.style.fontSize = '15px';
+            personalBtn.style.fontWeight = '600';
+            personalBtn.style.padding = '8px 22px';
+            personalBtn.style.cursor = 'pointer';
+            let schoolBtn = document.createElement('button');
+            schoolBtn.textContent = 'School';
+            schoolBtn.style.background = 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
+            schoolBtn.style.color = '#fff';
+            schoolBtn.style.border = 'none';
+            schoolBtn.style.borderRadius = '7px';
+            schoolBtn.style.fontSize = '15px';
+            schoolBtn.style.fontWeight = '600';
+            schoolBtn.style.padding = '8px 22px';
+            schoolBtn.style.cursor = 'pointer';
+            personalBtn.onclick = () => {
+              tasks.push({ text, type: 'personal' });
+              localStorage.setItem('tasks', JSON.stringify(tasks));
+              document.body.removeChild(modal);
+              taskInput.value = '';
+              loadTasks();
+              showCustomPopup('Task added!');
+            };
+            schoolBtn.onclick = () => {
+              tasks.push({ text, type: 'school' });
+              localStorage.setItem('tasks', JSON.stringify(tasks));
+              document.body.removeChild(modal);
+              taskInput.value = '';
+              loadTasks();
+              showCustomPopup('Task added!');
+            };
+            btnRow.appendChild(personalBtn);
+            btnRow.appendChild(schoolBtn);
+            box.appendChild(msg);
+            box.appendChild(taskSpan);
+            box.appendChild(btnRow);
+            modal.appendChild(box);
+            document.body.appendChild(modal);
+          }
+        });
     });
   }
 
