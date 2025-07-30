@@ -16,9 +16,40 @@ function loadDeadlines() {
     const deadlineList = document.getElementById('deadlineList');
     const deadlines = JSON.parse(localStorage.getItem('deadlines') || '[]');
     if (deadlineList) deadlineList.innerHTML = '';
-    deadlines.forEach(deadline => {
+    deadlines.forEach((deadline, idx) => {
       const div = document.createElement('div');
+      div.style.display = 'flex';
+      div.style.alignItems = 'center';
+      div.style.justifyContent = 'space-between';
       div.textContent = `${deadline.text} (${new Date(deadline.date).toLocaleString()})`;
+      // Remove button
+      const delBtn = document.createElement('button');
+      delBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#e74c3c"/><line x1="4.5" y1="4.5" x2="9.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+      delBtn.style.background = 'transparent';
+      delBtn.style.border = 'none';
+      delBtn.style.padding = '0 2px';
+      delBtn.style.marginLeft = '8px';
+      delBtn.style.cursor = 'pointer';
+      delBtn.style.display = 'flex';
+      delBtn.style.alignItems = 'center';
+      delBtn.style.transition = 'transform 0.18s cubic-bezier(.4,2,.3,1)';
+      delBtn.style.width = '22px';
+      delBtn.style.height = '22px';
+      delBtn.onmouseover = () => { delBtn.style.transform = 'scale(1.2)'; };
+      delBtn.onmouseout = () => { delBtn.style.transform = 'scale(1)'; };
+      delBtn.onclick = () => {
+        div.style.transform = 'scale(0.7)';
+        div.style.opacity = '0';
+        setTimeout(() => {
+          let deadlinesArr = JSON.parse(localStorage.getItem('deadlines') || '[]');
+          deadlinesArr.splice(idx, 1);
+          localStorage.setItem('deadlines', JSON.stringify(deadlinesArr));
+          // Sync to chrome.storage.local for background.js
+          chrome.storage.local.set({ deadlines: deadlinesArr });
+          loadDeadlines();
+        }, 180);
+      };
+      div.appendChild(delBtn);
       if (deadlineList) deadlineList.appendChild(div);
     });
   } catch (e) {
@@ -515,4 +546,3 @@ function showCustomPopup(message, type = 'info') {
     alert(message);
   }
 }
-
