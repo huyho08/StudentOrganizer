@@ -33,12 +33,13 @@
     input, select, textarea {
       width: 100%;
       margin: 5px 0 12px 0;
-      padding: 9px 10px;
+      padding: 12px 14px;
       border: 1px solid #dbeafe;
       border-radius: 7px;
-      font-size: 15px;
+      font-size: 16px;
       background: #f8fafc;
       transition: border 0.2s;
+      box-sizing: border-box;
     }
     input:focus, select:focus, textarea:focus {
       border: 1.5px solid #2d6cdf;
@@ -146,33 +147,17 @@
 
     <label>Task List</label>
     <div class="row">
-      <input id="taskInput" placeholder="New task">
-      <select id="taskType" style="width:auto;min-width:90px;">
+      <input id="taskInput" placeholder="New task" style="flex:2; min-width:0;">
+      <select id="taskType" style="flex:1; min-width:90px;">
         <option value="personal">Personal</option>
         <option value="school">School</option>
       </select>
-      <button id="addTaskBtn" style="width:auto;min-width:70px;">Add</button>
+      <button id="addTaskBtn" style="flex:1; min-width:70px;">Add</button>
     </div>
     <div>
       <h4 style="margin-bottom:4px;margin-top:10px;color:#2d6cdf;">Personal Tasks</h4>
-      <div class="row" style="margin-bottom:6px;">
-        <label for="personalSort" style="margin:0;font-size:13px;">Sort:</label>
-        <select id="personalSort" style="width:auto;min-width:90px;">
-          <option value="default">Default</option>
-          <option value="az">A-Z</option>
-          <option value="za">Z-A</option>
-        </select>
-      </div>
       <div id="personalTaskList"></div>
       <h4 style="margin-bottom:4px;margin-top:14px;color:#2d6cdf;">School Tasks</h4>
-      <div class="row" style="margin-bottom:6px;">
-        <label for="schoolSort" style="margin:0;font-size:13px;">Sort:</label>
-        <select id="schoolSort" style="width:auto;min-width:90px;">
-          <option value="default">Default</option>
-          <option value="az">A-Z</option>
-          <option value="za">Z-A</option>
-        </select>
-      </div>
       <div id="schoolTaskList"></div>
     </div>
   </div>

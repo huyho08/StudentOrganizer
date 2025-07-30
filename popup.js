@@ -91,10 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const taskTypeSelect = document.getElementById('taskType');
   const personalTaskList = document.getElementById('personalTaskList');
   const schoolTaskList = document.getElementById('schoolTaskList');
-  const personalSort = document.getElementById('personalSort');
-  const schoolSort = document.getElementById('schoolSort');
-  let personalSortOrder = personalSort ? personalSort.value : 'default';
-  let schoolSortOrder = schoolSort ? schoolSort.value : 'default';
+  // Removed manual sorting dropdowns; sorting will be automatic using keywords.json
 
   function escapeHtml(text) {
   if (typeof text !== 'string') text = String(text || '');
@@ -109,110 +106,207 @@ document.addEventListener('DOMContentLoaded', () => {
       const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
       let personal = [];
       let school = [];
-      if (personalTaskList) personalTaskList.innerHTML = '';
-      if (schoolTaskList) schoolTaskList.innerHTML = '';
-      tasks.forEach((t, idx) => {
-        let obj = typeof t === 'string' ? { text: t, type: 'personal' } : t;
-        if (obj.type === 'school') {
-          school.push(obj);
-        } else {
-          personal.push(obj);
-        }
-      });
-      // --- Automatic keyword-based sorting ---
-      function keywordSort(arr) {
-        // Example: prioritize tasks with 'urgent', 'important', 'due', 'asap', 'today', 'homework', 'exam', 'project', 'assignment'
-        const priorityKeywords = [
-          'urgent', 'important', 'due', 'asap', 'today', 'homework', 'exam', 'project', 'assignment', 'test', 'final', 'midterm', 'submit', 'presentation'
-        ];
-        return arr.slice().sort((a, b) => {
-          const aText = (a.text || '').toLowerCase();
-          const bText = (b.text || '').toLowerCase();
-          const aPriority = priorityKeywords.findIndex(k => aText.includes(k));
-          const bPriority = priorityKeywords.findIndex(k => bText.includes(k));
-          if (aPriority === -1 && bPriority === -1) {
-            // If neither has a keyword, keep original order
-            return 0;
-          } else if (aPriority === -1) {
-            return 1;
-          } else if (bPriority === -1) {
-            return -1;
-          } else {
-            return aPriority - bPriority;
-          }
-        });
-      }
-      personal = keywordSort(personal);
-      school = keywordSort(school);
-      function renderTaskList(list, arr, type) {
-        arr.forEach(obj => {
-          let div = document.createElement('div');
-          div.style.display = 'flex';
-          div.style.alignItems = 'center';
-          div.style.justifyContent = 'space-between';
-          div.style.background = '#f8fafc';
-          div.style.borderRadius = '5px';
-          div.style.marginBottom = '5px';
-          div.style.padding = '6px 10px';
-          div.style.transition = 'box-shadow 0.2s, transform 0.2s';
-          div.style.boxShadow = '0 0 0 rgba(45,108,223,0)';
-          div.onmouseenter = () => {
-            div.style.boxShadow = '0 2px 12px rgba(45,108,223,0.10)';
-            div.style.transform = 'scale(1.03)';
-          };
-          div.onmouseleave = () => {
-            div.style.boxShadow = '0 0 0 rgba(45,108,223,0)';
-            div.style.transform = 'scale(1)';
-          };
-          // Task text
-          let textSpan = document.createElement('span');
-          textSpan.textContent = escapeHtml(obj.text);
-          textSpan.style.flex = '1';
-          // Remove button
-          let delBtn = document.createElement('button');
-          delBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#e74c3c"/><line x1="4.5" y1="4.5" x2="9.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
-          delBtn.style.background = 'transparent';
-          delBtn.style.border = 'none';
-          delBtn.style.padding = '0 2px';
-          delBtn.style.marginLeft = '8px';
-          delBtn.style.cursor = 'pointer';
-          delBtn.style.display = 'flex';
-          delBtn.style.alignItems = 'center';
-          delBtn.style.transition = 'transform 0.18s cubic-bezier(.4,2,.3,1)';
-          delBtn.style.width = '22px';
-          delBtn.style.height = '22px';
-          delBtn.onmouseover = () => { delBtn.style.transform = 'scale(1.25) rotate(-10deg)'; };
-          delBtn.onmouseout = () => { delBtn.style.transform = 'scale(1) rotate(0)'; };
-          delBtn.onclick = () => {
-            div.style.transition = 'transform 0.25s cubic-bezier(.4,2,.3,1), opacity 0.25s';
-            div.style.transform = 'scale(0.7)';
-            div.style.opacity = '0';
-            setTimeout(() => {
-              let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-              let idx = tasks.findIndex(t => (typeof t === 'string' ? t === obj.text : t.text === obj.text && (t.type || type) === (obj.type || type)));
-              if (idx > -1) {
-                tasks.splice(idx, 1);
-                localStorage.setItem('tasks', JSON.stringify(tasks));
-                loadTasks();
-                showCustomPopup('Task deleted.');
+      // Load keywords.json for sorting
+      fetch('keywords.json')
+        .then(res => res.json())
+        .then(keywordsData => {
+          const personalKeywords = Array.isArray(keywordsData.personal) ? keywordsData.personal.map(k => k.toLowerCase()) : [];
+          const schoolKeywords = Array.isArray(keywordsData.school) ? keywordsData.school.map(k => k.toLowerCase()) : [];
+          // Assign tasks to personal or school based on keywords
+          let unknownTasks = [];
+          tasks.forEach((t, idx) => {
+            const text = (typeof t === 'string' ? t : t.text || '').toLowerCase();
+            if (t.type === 'personal' || (!t.type && personalKeywords.some(k => text.includes(k)))) {
+              personal.push(t);
+            } else if (t.type === 'school' || (!t.type && schoolKeywords.some(k => text.includes(k)))) {
+              school.push(t);
+            } else {
+              unknownTasks.push({ t, idx });
+            }
+          });
+          // If there are unknown tasks, prompt user for each
+          if (unknownTasks.length > 0) {
+            let i = 0;
+            function promptNext() {
+              if (i >= unknownTasks.length) {
+                // After all prompts, reload tasks to reflect new keywords
+                setTimeout(loadTasks, 100);
+                return;
               }
-            }, 180);
-          };
-          div.appendChild(textSpan);
-          div.appendChild(delBtn);
-          if (list) {
-            div.style.opacity = '0';
-            div.style.transform = 'scale(0.7)';
-            list.appendChild(div);
-            setTimeout(() => {
-              div.style.opacity = '1';
-              div.style.transform = 'scale(1)';
-            }, 10);
+              const obj = unknownTasks[i].t;
+              const taskText = obj.text || obj;
+              // Create a modal prompt
+              let modal = document.createElement('div');
+              modal.style.position = 'fixed';
+              modal.style.top = '0';
+              modal.style.left = '0';
+              modal.style.width = '100vw';
+              modal.style.height = '100vh';
+              modal.style.background = 'rgba(0,0,0,0.18)';
+              modal.style.zIndex = 2147483648;
+              modal.style.display = 'flex';
+              modal.style.alignItems = 'center';
+              modal.style.justifyContent = 'center';
+              let box = document.createElement('div');
+              box.style.background = '#fff';
+              box.style.borderRadius = '10px';
+              box.style.boxShadow = '0 4px 24px rgba(45,108,223,0.13)';
+              box.style.padding = '28px 32px 22px 32px';
+              box.style.display = 'flex';
+              box.style.flexDirection = 'column';
+              box.style.alignItems = 'center';
+              box.style.gap = '18px';
+              let msg = document.createElement('div');
+              msg.textContent = `Which category should this task belong to?`;
+              msg.style.fontSize = '16px';
+              msg.style.color = '#2d6cdf';
+              msg.style.fontWeight = '600';
+              let taskSpan = document.createElement('div');
+              taskSpan.textContent = `"${taskText}"`;
+              taskSpan.style.fontSize = '15px';
+              taskSpan.style.color = '#444';
+              taskSpan.style.marginBottom = '8px';
+              let btnRow = document.createElement('div');
+              btnRow.style.display = 'flex';
+              btnRow.style.gap = '18px';
+              let personalBtn = document.createElement('button');
+              personalBtn.textContent = 'Personal';
+              personalBtn.style.background = 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
+              personalBtn.style.color = '#fff';
+              personalBtn.style.border = 'none';
+              personalBtn.style.borderRadius = '7px';
+              personalBtn.style.fontSize = '15px';
+              personalBtn.style.fontWeight = '600';
+              personalBtn.style.padding = '8px 22px';
+              personalBtn.style.cursor = 'pointer';
+              let schoolBtn = document.createElement('button');
+              schoolBtn.textContent = 'School';
+              schoolBtn.style.background = 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
+              schoolBtn.style.color = '#fff';
+              schoolBtn.style.border = 'none';
+              schoolBtn.style.borderRadius = '7px';
+              schoolBtn.style.fontSize = '15px';
+              schoolBtn.style.fontWeight = '600';
+              schoolBtn.style.padding = '8px 22px';
+              schoolBtn.style.cursor = 'pointer';
+              personalBtn.onclick = () => {
+                // Add keyword to personal
+                updateKeywordsFile(taskText, 'personal');
+                document.body.removeChild(modal);
+                i++;
+                promptNext();
+              };
+              schoolBtn.onclick = () => {
+                // Add keyword to school
+                updateKeywordsFile(taskText, 'school');
+                document.body.removeChild(modal);
+                i++;
+                promptNext();
+              };
+              btnRow.appendChild(personalBtn);
+              btnRow.appendChild(schoolBtn);
+              box.appendChild(msg);
+              box.appendChild(taskSpan);
+              box.appendChild(btnRow);
+              modal.appendChild(box);
+              document.body.appendChild(modal);
+            }
+            promptNext();
+            return; // Don't render lists until user chooses
           }
+          // Render lists
+          function renderTaskList(list, arr, type) {
+            if (list) list.innerHTML = '';
+            arr.forEach(obj => {
+              let div = document.createElement('div');
+              div.style.display = 'flex';
+              div.style.alignItems = 'center';
+              div.style.background = '#eaf1fb';
+              div.style.color = '#2d6cdf';
+              div.style.borderRadius = '5px';
+              div.style.padding = '5px 10px';
+              div.style.marginBottom = '4px';
+              div.style.fontSize = '14px';
+              div.style.letterSpacing = '0.2px';
+              div.style.boxShadow = '0 0 0 rgba(45,108,223,0)';
+              div.onmouseenter = () => {
+                div.style.boxShadow = '0 4px 16px rgba(45,108,223,0.13)';
+                div.style.transform = 'scale(1.03)';
+              };
+              div.onmouseleave = () => {
+                div.style.boxShadow = '0 0 0 rgba(45,108,223,0)';
+                div.style.transform = 'scale(1)';
+              };
+              // Task text
+              let textSpan = document.createElement('span');
+              textSpan.textContent = escapeHtml(obj.text);
+              textSpan.style.flex = '1';
+              // Remove button
+              let delBtn = document.createElement('button');
+              delBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#e74c3c"/><line x1="4.5" y1="4.5" x2="9.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+              delBtn.style.background = 'transparent';
+              delBtn.style.border = 'none';
+              delBtn.style.padding = '0 2px';
+              delBtn.style.marginLeft = '8px';
+              delBtn.style.cursor = 'pointer';
+              delBtn.style.display = 'flex';
+              delBtn.style.alignItems = 'center';
+              delBtn.style.transition = 'transform 0.18s cubic-bezier(.4,2,.3,1)';
+              delBtn.style.width = '22px';
+              delBtn.style.height = '22px';
+              delBtn.onmouseover = () => {
+                delBtn.style.transform = 'scale(1.2)';
+              };
+              delBtn.onmouseout = () => {
+                delBtn.style.transform = 'scale(1)';
+              };
+              delBtn.onclick = () => {
+                div.style.transform = 'scale(0.7)';
+                div.style.opacity = '0';
+                setTimeout(() => {
+                  let tasksArr = JSON.parse(localStorage.getItem('tasks') || '[]');
+                  tasksArr = tasksArr.filter(x => !(x.text === obj.text && (x.type || 'personal') === (obj.type || 'personal')));
+                  localStorage.setItem('tasks', JSON.stringify(tasksArr));
+                  loadTasks();
+                }, 180);
+              };
+              div.appendChild(textSpan);
+              div.appendChild(delBtn);
+              if (list) {
+                div.style.opacity = '0';
+                div.style.transform = 'scale(0.7)';
+                list.appendChild(div);
+                setTimeout(() => {
+                  div.style.opacity = '1';
+                  div.style.transform = 'scale(1)';
+                }, 10);
+              }
+            });
+          }
+          renderTaskList(personalTaskList, personal, 'personal');
+          renderTaskList(schoolTaskList, school, 'school');
+        })
+        .catch(e => {
+          if (personalTaskList) personalTaskList.innerHTML = '<div style="color:red;">Error loading tasks.</div>';
+          if (schoolTaskList) schoolTaskList.innerHTML = '<div style="color:red;">Error loading tasks.</div>';
+          showCustomPopup('Error loading tasks.', 'error');
         });
-      }
-      renderTaskList(personalTaskList, personal, 'personal');
-      renderTaskList(schoolTaskList, school, 'school');
+
+    // Helper to update keywords.json
+    function updateKeywordsFile(keyword, category) {
+      fetch('keywords.json')
+        .then(res => res.json())
+        .then(data => {
+          if (!data[category]) data[category] = [];
+          if (!data[category].includes(keyword)) data[category].push(keyword);
+          // Save updated keywords.json
+          fetch('keywords.json', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+        });
+    }
     } catch (e) {
       if (personalTaskList) personalTaskList.innerHTML = '<div style="color:red;">Error loading tasks.</div>';
       if (schoolTaskList) schoolTaskList.innerHTML = '<div style="color:red;">Error loading tasks.</div>';
