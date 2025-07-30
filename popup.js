@@ -430,9 +430,40 @@ document.addEventListener('DOMContentLoaded', () => {
             schoolBtn.style.fontWeight = '600';
             schoolBtn.style.padding = '8px 22px';
             schoolBtn.style.cursor = 'pointer';
+            // Add Neither button
+            let neitherBtn = document.createElement('button');
+            neitherBtn.textContent = 'Neither';
+            neitherBtn.style.background = '#eaeaea';
+            neitherBtn.style.color = '#444';
+            neitherBtn.style.border = 'none';
+            neitherBtn.style.borderRadius = '7px';
+            neitherBtn.style.fontSize = '15px';
+            neitherBtn.style.fontWeight = '600';
+            neitherBtn.style.padding = '8px 22px';
+            neitherBtn.style.cursor = 'pointer';
+
+            // Helper to update keywords.json
+            function updateKeywordsFile(keyword, category) {
+              fetch('keywords.json')
+                .then(res => res.json())
+                .then(data => {
+                  if (!data[category]) data[category] = [];
+                  if (!data[category].includes(keyword)) {
+                    data[category].push(keyword);
+                    // Save updated keywords.json (will only work in dev/local, not in production extension)
+                    fetch('keywords.json', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(data)
+                    });
+                  }
+                });
+            }
+
             personalBtn.onclick = () => {
               tasks.push({ text, type: 'personal' });
               localStorage.setItem('tasks', JSON.stringify(tasks));
+              updateKeywordsFile(text, 'personal');
               document.body.removeChild(modal);
               taskInput.value = '';
               loadTasks();
@@ -441,13 +472,20 @@ document.addEventListener('DOMContentLoaded', () => {
             schoolBtn.onclick = () => {
               tasks.push({ text, type: 'school' });
               localStorage.setItem('tasks', JSON.stringify(tasks));
+              updateKeywordsFile(text, 'school');
               document.body.removeChild(modal);
               taskInput.value = '';
               loadTasks();
               showCustomPopup('Task added!');
             };
+            neitherBtn.onclick = () => {
+              document.body.removeChild(modal);
+              taskInput.value = '';
+              showCustomPopup('Task not categorized.');
+            };
             btnRow.appendChild(personalBtn);
             btnRow.appendChild(schoolBtn);
+            btnRow.appendChild(neitherBtn);
             box.appendChild(msg);
             box.appendChild(taskSpan);
             box.appendChild(btnRow);
