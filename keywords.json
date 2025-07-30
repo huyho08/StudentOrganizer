@@ -1,25 +1,30 @@
 {
   "personal": [
-    "groceries", "call mom", "gym", "doctor", "birthday", "shopping", "clean", "laundry",
-    "meditation", "dentist", "vacation", "birthday party", "anniversary", "pet care",
-    "car maintenance", "pay bills", "bank", "appointment", "haircut", "meal prep",
-    "yoga", "walk dog", "read book", "relax", "movie night", "meet friends",
-    "birthday gift", "shopping list", "laundry detergent", "house chores", "gardening",
-    "clean room", "take out trash", "recycle", "call dad", "call siblings", "family dinner",
-    "doctor checkup", "therapy", "massage", "check mail", "bank appointment",
-    "car wash", "exercise", "run", "cycling", "hiking", "visit grandparents",
-    "plan party", "dental cleaning", "vaccination", "doctor follow-up", "hair appointment",
-    "clean kitchen", "clean bathroom", "home repair", "organize closet", "meal plan"
+    "groceries", "shopping", "laundry", "cleaning", "chores", "room", "clothes",
+    "phone", "call", "text", "friends", "family", "siblings", "parents", "hangout",
+    "movie", "gaming", "play", "relax", "nap", "read", "book", "series", "music",
+    "concert", "party", "birthday", "gift", "photos", "snapchat", "instagram",
+    "tiktok", "social", "walk", "bike", "skate", "gym", "run", "workout", "dance",
+    "sports", "basketball", "soccer", "football", "netball", "cricket", "training",
+    "match", "team", "coach", "practice", "game", "club", "hobby", "drawing",
+    "painting", "sketching", "writing", "poetry", "journal", "diary", "pets",
+    "dog", "cat", "vet", "food", "snacks", "drink", "water", "dentist", "doctor",
+    "appointment", "wellness", "health", "sleep", "routine", "alarm", "timer",
+    "planner", "reminder", "budget", "money", "allowance", "save", "spend"
   ],
-
   "school": [
-    "homework", "assignment", "exam", "project", "test", "midterm", "final", "presentation", "lab",
-    "essay", "research", "study group", "quiz", "report", "paper", "lecture", "tutorial",
-    "reading", "notes", "deadline", "revision", "practice", "discussion", "case study",
-    "group work", "field trip", "consultation", "seminar", "worksheet", "portfolio",
-    "oral exam", "experiment", "submission", "grading", "feedback", "class participation",
-    "attendance", "brainstorming", "outline", "bibliography", "citation", "draft",
-    "scheduling", "test prep", "extra credit", "assignment extension", "coursework",
-    "online class", "lab report", "presentation slides", "final project", "project proposal"
+    "homework", "assignment", "project", "essay", "presentation", "exam", "test",
+    "quiz", "final", "midterm", "lab", "class", "subject", "math", "english",
+    "science", "history", "geography", "biology", "chemistry", "physics", "music",
+    "art", "drama", "dance", "sport", "PE", "health", "languages", "french", "japanese",
+    "study", "revision", "notes", "notebook", "pen", "pencil", "highlighter", "textbook",
+    "worksheet", "reading", "draft", "feedback", "groupwork", "teamwork", "partner",
+    "research", "report", "experiment", "outline", "due", "deadline", "submit", "edit",
+    "proofread", "plagiarism", "citation", "bibliography", "question", "topic", "speech",
+    "debate", "discussion", "attendance", "schedule", "planner", "calendar", "timetable",
+    "bell", "recess", "lunch", "teacher", "classroom", "schoolyard", "locker", "uniform",
+    "excursion", "camp", "incursion", "detention", "library", "canteen", "assembly",
+    "grades", "report", "parent", "guardian", "portal", "login", "canvas", "teams",
+    "zoom", "classroom", "google", "submission", "extension"
   ]
 }
