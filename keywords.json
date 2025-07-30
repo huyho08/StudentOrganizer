@@ -1,0 +1,25 @@
+{
+  "personal": [
+    "groceries", "call mom", "gym", "doctor", "birthday", "shopping", "clean", "laundry",
+    "meditation", "dentist", "vacation", "birthday party", "anniversary", "pet care",
+    "car maintenance", "pay bills", "bank", "appointment", "haircut", "meal prep",
+    "yoga", "walk dog", "read book", "relax", "movie night", "meet friends",
+    "birthday gift", "shopping list", "laundry detergent", "house chores", "gardening",
+    "clean room", "take out trash", "recycle", "call dad", "call siblings", "family dinner",
+    "doctor checkup", "therapy", "massage", "check mail", "bank appointment",
+    "car wash", "exercise", "run", "cycling", "hiking", "visit grandparents",
+    "plan party", "dental cleaning", "vaccination", "doctor follow-up", "hair appointment",
+    "clean kitchen", "clean bathroom", "home repair", "organize closet", "meal plan"
+  ],
+
+  "school": [
+    "homework", "assignment", "exam", "project", "test", "midterm", "final", "presentation", "lab",
+    "essay", "research", "study group", "quiz", "report", "paper", "lecture", "tutorial",
+    "reading", "notes", "deadline", "revision", "practice", "discussion", "case study",
+    "group work", "field trip", "consultation", "seminar", "worksheet", "portfolio",
+    "oral exam", "experiment", "submission", "grading", "feedback", "class participation",
+    "attendance", "brainstorming", "outline", "bibliography", "citation", "draft",
+    "scheduling", "test prep", "extra credit", "assignment extension", "coursework",
+    "online class", "lab report", "presentation slides", "final project", "project proposal"
+  ]
+}
