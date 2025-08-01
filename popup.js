@@ -88,24 +88,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Deadline Add Logic ---
   const addDeadlineBtn = document.getElementById('addDeadlineBtn');
   const deadlineInput = document.getElementById('deadlineInput');
-  const deadlineDateInput = document.getElementById('deadlineDate');
-  const deadlineTimeInput = document.getElementById('deadlineTime');
-  if (addDeadlineBtn && deadlineInput && deadlineDateInput && deadlineTimeInput) {
+  const deadlineDateTimeInput = document.getElementById('deadlineDateTime');
+  if (addDeadlineBtn && deadlineInput && deadlineDateTimeInput) {
     addDeadlineBtn.addEventListener('click', () => {
       try {
         const deadline = deadlineInput.value;
-        const date = deadlineDateInput.value;
-        const time = deadlineTimeInput.value;
-        if (deadline && date && time) {
-          const dateTime = `${date}T${time}`;
+        const dateTime = deadlineDateTimeInput.value;
+        if (deadline && dateTime) {
           saveDeadline(deadline, dateTime);
           // Sync deadlines to chrome.storage.local for background.js
           const deadlines = JSON.parse(localStorage.getItem('deadlines') || '[]');
           chrome.storage.local.set({ deadlines });
           loadDeadlines();
           deadlineInput.value = '';
-          deadlineDateInput.value = '';
-          deadlineTimeInput.value = '';
+          deadlineDateTimeInput.value = '';
         } else {
           showCustomPopup('Please fill out all deadline fields.', 'error');
         }
@@ -152,259 +148,146 @@ document.addEventListener('DOMContentLoaded', () => {
               school.push(t);
             } else {
               unknownTasks.push({ t, idx });
-        .then(res => res.json())
-        .then(keywordsData => {
-          const personalKeywords = Array.isArray(keywordsData.personal) ? keywordsData.personal.map(k => k.toLowerCase()) : [];
-          const schoolKeywords = Array.isArray(keywordsData.school) ? keywordsData.school.map(k => k.toLowerCase()) : [];
-          const lowerText = text.toLowerCase();
-          // Find all matching keywords in both categories
-          const matchedPersonal = personalKeywords.filter(k => lowerText.includes(k));
-          const matchedSchool = schoolKeywords.filter(k => lowerText.includes(k));
-          let type = null;
-          if (matchedPersonal.length && matchedSchool.length) {
-            // Conflict: prompt user for category
-            let modal = document.createElement('div');
-            modal.style.position = 'fixed';
-            modal.style.top = '0';
-            modal.style.left = '0';
-            modal.style.width = '100vw';
-            modal.style.height = '100vh';
-            modal.style.background = 'rgba(0,0,0,0.18)';
-            modal.style.zIndex = 2147483648;
-            modal.style.display = 'flex';
-            modal.style.alignItems = 'center';
-            modal.style.justifyContent = 'center';
-            let box = document.createElement('div');
-            box.style.background = '#fff';
-            box.style.borderRadius = '10px';
-            box.style.boxShadow = '0 4px 24px rgba(45,108,223,0.13)';
-            box.style.padding = '28px 32px 22px 32px';
-            box.style.display = 'flex';
-            box.style.flexDirection = 'column';
-            box.style.alignItems = 'center';
-            box.style.gap = '18px';
-            let msg = document.createElement('div');
-            msg.innerHTML = `This task matches keywords in <b>both Personal and School</b>.<br>Which category should it belong to?`;
-            msg.style.fontSize = '16px';
-            msg.style.color = '#e67e22';
-            msg.style.fontWeight = '600';
-            let taskSpan = document.createElement('div');
-            taskSpan.textContent = `"${text}"`;
-            taskSpan.style.fontSize = '15px';
-            taskSpan.style.color = '#444';
-            taskSpan.style.marginBottom = '8px';
-            let btnRow = document.createElement('div');
-            btnRow.style.display = 'flex';
-            btnRow.style.gap = '18px';
-            let personalBtn = document.createElement('button');
-            personalBtn.textContent = 'Personal';
-            personalBtn.style.background = 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
-            personalBtn.style.color = '#fff';
-            personalBtn.style.border = 'none';
-            personalBtn.style.borderRadius = '7px';
-            personalBtn.style.fontSize = '15px';
-            personalBtn.style.fontWeight = '600';
-            personalBtn.style.padding = '8px 22px';
-            personalBtn.style.cursor = 'pointer';
-            let schoolBtn = document.createElement('button');
-            schoolBtn.textContent = 'School';
-            schoolBtn.style.background = 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
-            schoolBtn.style.color = '#fff';
-            schoolBtn.style.border = 'none';
-            schoolBtn.style.borderRadius = '7px';
-            schoolBtn.style.fontSize = '15px';
-            schoolBtn.style.fontWeight = '600';
-            schoolBtn.style.padding = '8px 22px';
-            schoolBtn.style.cursor = 'pointer';
-            let neitherBtn = document.createElement('button');
-            neitherBtn.textContent = 'Neither';
-            neitherBtn.style.background = '#eaeaea';
-            neitherBtn.style.color = '#444';
-            neitherBtn.style.border = 'none';
-            neitherBtn.style.borderRadius = '7px';
-            neitherBtn.style.fontSize = '15px';
-            neitherBtn.style.fontWeight = '600';
-            neitherBtn.style.padding = '8px 22px';
-            neitherBtn.style.cursor = 'pointer';
-            function updateKeywordsFile(keyword, category) {
-              fetch('keywords.json')
-                .then(res => res.json())
-                .then(data => {
-                  if (!data[category]) data[category] = [];
-                  if (!data[category].includes(keyword)) {
-                    data[category].push(keyword);
-                    fetch('keywords.json', {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(data)
-                    });
-                  }
-                });
             }
-            personalBtn.onclick = () => {
-              tasks.push({ text, type: 'personal' });
-              localStorage.setItem('tasks', JSON.stringify(tasks));
-              updateKeywordsFile(text.toLowerCase(), 'personal');
-              document.body.removeChild(modal);
-              taskInput.value = '';
-              setTimeout(() => {
-                loadTasks();
-                showCustomPopup('Task added!');
-              }, 200);
-            };
-            schoolBtn.onclick = () => {
-              tasks.push({ text, type: 'school' });
-              localStorage.setItem('tasks', JSON.stringify(tasks));
-              updateKeywordsFile(text.toLowerCase(), 'school');
-              document.body.removeChild(modal);
-              taskInput.value = '';
-              setTimeout(() => {
-                loadTasks();
-                showCustomPopup('Task added!');
-              }, 200);
-            };
-            neitherBtn.onclick = () => {
-              document.body.removeChild(modal);
-              taskInput.value = '';
-              showCustomPopup('Task not categorized.');
-            };
-            btnRow.appendChild(personalBtn);
-            btnRow.appendChild(schoolBtn);
-            btnRow.appendChild(neitherBtn);
-            box.appendChild(msg);
-            box.appendChild(taskSpan);
-            box.appendChild(btnRow);
-            modal.appendChild(box);
-            document.body.appendChild(modal);
-            return;
-          } else if (matchedPersonal.length) {
-            type = 'personal';
-          } else if (matchedSchool.length) {
-            type = 'school';
-          }
-          if (type) {
-            tasks.push({ text, type });
-            localStorage.setItem('tasks', JSON.stringify(tasks));
-            taskInput.value = '';
-            loadTasks();
-            showCustomPopup('Task added!');
-          } else {
-            // Prompt user for category if unknown
-            let modal = document.createElement('div');
-            modal.style.position = 'fixed';
-            modal.style.top = '0';
-            modal.style.left = '0';
-            modal.style.width = '100vw';
-            modal.style.height = '100vh';
-            modal.style.background = 'rgba(0,0,0,0.18)';
-            modal.style.zIndex = 2147483648;
-            modal.style.display = 'flex';
-            modal.style.alignItems = 'center';
-            modal.style.justifyContent = 'center';
-            let box = document.createElement('div');
-            box.style.background = '#fff';
-            box.style.borderRadius = '10px';
-            box.style.boxShadow = '0 4px 24px rgba(45,108,223,0.13)';
-            box.style.padding = '28px 32px 22px 32px';
-            box.style.display = 'flex';
-            box.style.flexDirection = 'column';
-            box.style.alignItems = 'center';
-            box.style.gap = '18px';
-            let msg = document.createElement('div');
-            msg.textContent = `Which category should this task belong to?`;
-            msg.style.fontSize = '16px';
-            msg.style.color = '#2d6cdf';
-            msg.style.fontWeight = '600';
-            let taskSpan = document.createElement('div');
-            taskSpan.textContent = `"${text}"`;
-            taskSpan.style.fontSize = '15px';
-            taskSpan.style.color = '#444';
-            taskSpan.style.marginBottom = '8px';
-            let btnRow = document.createElement('div');
-            btnRow.style.display = 'flex';
-            btnRow.style.gap = '18px';
-            let personalBtn = document.createElement('button');
-            personalBtn.textContent = 'Personal';
-            personalBtn.style.background = 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
-            personalBtn.style.color = '#fff';
-            personalBtn.style.border = 'none';
-            personalBtn.style.borderRadius = '7px';
-            personalBtn.style.fontSize = '15px';
-            personalBtn.style.fontWeight = '600';
-            personalBtn.style.padding = '8px 22px';
-            personalBtn.style.cursor = 'pointer';
-            let schoolBtn = document.createElement('button');
-            schoolBtn.textContent = 'School';
-            schoolBtn.style.background = 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
-            schoolBtn.style.color = '#fff';
-            schoolBtn.style.border = 'none';
-            schoolBtn.style.borderRadius = '7px';
-            schoolBtn.style.fontSize = '15px';
-            schoolBtn.style.fontWeight = '600';
-            schoolBtn.style.padding = '8px 22px';
-            schoolBtn.style.cursor = 'pointer';
-            let neitherBtn = document.createElement('button');
-            neitherBtn.textContent = 'Neither';
-            neitherBtn.style.background = '#eaeaea';
-            neitherBtn.style.color = '#444';
-            neitherBtn.style.border = 'none';
-            neitherBtn.style.borderRadius = '7px';
-            neitherBtn.style.fontSize = '15px';
-            neitherBtn.style.fontWeight = '600';
-            neitherBtn.style.padding = '8px 22px';
-            neitherBtn.style.cursor = 'pointer';
-            function updateKeywordsFile(keyword, category) {
-              fetch('keywords.json')
-                .then(res => res.json())
-                .then(data => {
-                  if (!data[category]) data[category] = [];
-                  if (!data[category].includes(keyword)) {
-                    data[category].push(keyword);
-                    fetch('keywords.json', {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(data)
-                    });
-                  }
-                });
+          });
+          // If there are unknown tasks, prompt user for each
+          if (unknownTasks.length > 0) {
+            let i = 0;
+            function promptNext() {
+              if (i >= unknownTasks.length) {
+                // After all prompts, reload tasks to reflect new keywords
+                setTimeout(loadTasks, 100);
+                return;
+              }
+              const obj = unknownTasks[i].t;
+              const taskText = obj.text || obj;
+              // Create a modal prompt
+              let modal = document.createElement('div');
+              modal.style.position = 'fixed';
+              modal.style.top = '0';
+              modal.style.left = '0';
+              modal.style.width = '100vw';
+              modal.style.height = '100vh';
+              modal.style.background = 'rgba(0,0,0,0.18)';
+              modal.style.zIndex = 2147483648;
+              modal.style.display = 'flex';
+              modal.style.alignItems = 'center';
+              modal.style.justifyContent = 'center';
+              let box = document.createElement('div');
+              box.style.background = '#fff';
+              box.style.borderRadius = '10px';
+              box.style.boxShadow = '0 4px 24px rgba(45,108,223,0.13)';
+              box.style.padding = '28px 32px 22px 32px';
+              box.style.display = 'flex';
+              box.style.flexDirection = 'column';
+              box.style.alignItems = 'center';
+              box.style.gap = '18px';
+              let msg = document.createElement('div');
+              msg.textContent = `Which category should this task belong to?`;
+              msg.style.fontSize = '16px';
+              msg.style.color = '#2d6cdf';
+              msg.style.fontWeight = '600';
+              let taskSpan = document.createElement('div');
+              taskSpan.textContent = `"${taskText}"`;
+              taskSpan.style.fontSize = '15px';
+              taskSpan.style.color = '#444';
+              taskSpan.style.marginBottom = '8px';
+              let btnRow = document.createElement('div');
+              btnRow.style.display = 'flex';
+              btnRow.style.gap = '18px';
+              let personalBtn = document.createElement('button');
+              personalBtn.textContent = 'Personal';
+              personalBtn.style.background = 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
+              personalBtn.style.color = '#fff';
+              personalBtn.style.border = 'none';
+              personalBtn.style.borderRadius = '7px';
+              personalBtn.style.fontSize = '15px';
+              personalBtn.style.fontWeight = '600';
+              personalBtn.style.padding = '8px 22px';
+              personalBtn.style.cursor = 'pointer';
+              let schoolBtn = document.createElement('button');
+              schoolBtn.textContent = 'School';
+              schoolBtn.style.background = 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
+              schoolBtn.style.color = '#fff';
+              schoolBtn.style.border = 'none';
+              schoolBtn.style.borderRadius = '7px';
+              schoolBtn.style.fontSize = '15px';
+              schoolBtn.style.fontWeight = '600';
+              schoolBtn.style.padding = '8px 22px';
+              schoolBtn.style.cursor = 'pointer';
+              personalBtn.onclick = () => {
+                // Add keyword to personal
+                updateKeywordsFile(taskText, 'personal');
+                document.body.removeChild(modal);
+                i++;
+                promptNext();
+              };
+              schoolBtn.onclick = () => {
+                // Add keyword to school
+                updateKeywordsFile(taskText, 'school');
+                document.body.removeChild(modal);
+                i++;
+                promptNext();
+              };
+              btnRow.appendChild(personalBtn);
+              btnRow.appendChild(schoolBtn);
+              box.appendChild(msg);
+              box.appendChild(taskSpan);
+              box.appendChild(btnRow);
+              modal.appendChild(box);
+              document.body.appendChild(modal);
             }
-            personalBtn.onclick = () => {
-              tasks.push({ text, type: 'personal' });
-              localStorage.setItem('tasks', JSON.stringify(tasks));
-              updateKeywordsFile(text.toLowerCase(), 'personal');
-              document.body.removeChild(modal);
-              taskInput.value = '';
-              setTimeout(() => {
-                loadTasks();
-                showCustomPopup('Task added!');
-              }, 200);
-            };
-            schoolBtn.onclick = () => {
-              tasks.push({ text, type: 'school' });
-              localStorage.setItem('tasks', JSON.stringify(tasks));
-              updateKeywordsFile(text.toLowerCase(), 'school');
-              document.body.removeChild(modal);
-              taskInput.value = '';
-              setTimeout(() => {
-                loadTasks();
-                showCustomPopup('Task added!');
-              }, 200);
-            };
-            neitherBtn.onclick = () => {
-              document.body.removeChild(modal);
-              taskInput.value = '';
-              showCustomPopup('Task not categorized.');
-            };
-            btnRow.appendChild(personalBtn);
-            btnRow.appendChild(schoolBtn);
-            btnRow.appendChild(neitherBtn);
-            box.appendChild(msg);
-            box.appendChild(taskSpan);
-            box.appendChild(btnRow);
-            modal.appendChild(box);
-            document.body.appendChild(modal);
-            return;
+            promptNext();
+            return; // Don't render lists until user chooses
           }
+          // Render lists
+          function renderTaskList(list, arr, type) {
+            if (list) list.innerHTML = '';
+            arr.forEach(obj => {
+              let div = document.createElement('div');
+              div.style.display = 'flex';
+              div.style.alignItems = 'center';
+              div.style.background = '#eaf1fb';
+              div.style.color = '#2d6cdf';
+              div.style.borderRadius = '5px';
+              div.style.padding = '5px 10px';
+              div.style.marginBottom = '4px';
+              div.style.fontSize = '14px';
+              div.style.letterSpacing = '0.2px';
+              div.style.boxShadow = '0 0 0 rgba(45,108,223,0)';
+              div.onmouseenter = () => {
+                div.style.boxShadow = '0 4px 16px rgba(45,108,223,0.13)';
+                div.style.transform = 'scale(1.03)';
+              };
+              div.onmouseleave = () => {
+                div.style.boxShadow = '0 0 0 rgba(45,108,223,0)';
+                div.style.transform = 'scale(1)';
+              };
+              // Task text
+              let textSpan = document.createElement('span');
+              textSpan.textContent = escapeHtml(obj.text);
+              textSpan.style.flex = '1';
+              // Remove button
+              let delBtn = document.createElement('button');
+              delBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#e74c3c"/><line x1="4.5" y1="4.5" x2="9.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+              delBtn.style.background = 'transparent';
+              delBtn.style.border = 'none';
+              delBtn.style.padding = '0 2px';
+              delBtn.style.marginLeft = '8px';
+              delBtn.style.cursor = 'pointer';
+              delBtn.style.display = 'flex';
+              delBtn.style.alignItems = 'center';
+              delBtn.style.transition = 'transform 0.18s cubic-bezier(.4,2,.3,1)';
+              delBtn.style.width = '22px';
+              delBtn.style.height = '22px';
+              delBtn.onmouseover = () => {
+                delBtn.style.transform = 'scale(1.2)';
+              };
+              delBtn.onmouseout = () => {
+                delBtn.style.transform = 'scale(1)';
+              };
+              delBtn.onclick = () => {
+                div.style.transform = 'scale(0.7)';
                 div.style.opacity = '0';
                 setTimeout(() => {
                   let tasksArr = JSON.parse(localStorage.getItem('tasks') || '[]');
@@ -739,7 +622,7 @@ function showCustomPopup(message, type = 'info') {
     popup.style.fontSize = '15px';
     popup.style.fontFamily = 'Segoe UI, Arial, sans-serif';
     popup.style.fontWeight = '500';
-    popup.style.maxWidth = '200px';
+    popup.style.maxWidth = '150px';
     popup.style.pointerEvents = 'auto';
     popup.style.transition = 'opacity 0.3s, transform 0.4s cubic-bezier(.4,2,.3,1)';
     popup.style.display = 'flex';
