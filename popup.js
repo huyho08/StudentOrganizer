@@ -58,6 +58,52 @@ function loadDeadlines() {
   }
 }
 document.addEventListener('DOMContentLoaded', () => {
+  // --- Study Life Calculator Logic ---
+  const slcAge = document.getElementById('slc-age');
+  const slcStudy = document.getElementById('slc-study');
+  const slcExtra = document.getElementById('slc-extra');
+  const slcSleep = document.getElementById('slc-sleep');
+  const slcBtn = document.getElementById('slc-calc-btn');
+  const slcResult = document.getElementById('slc-result');
+
+  if (slcBtn) {
+    slcBtn.addEventListener('click', () => {
+      const age = Number(slcAge.value);
+      const study = Number(slcStudy.value);
+      const extra = Number(slcExtra.value);
+      const sleep = Number(slcSleep.value);
+      let score = 0;
+      let feedback = [];
+      // Study: 2-4 hours optimal
+      if (study >= 2 && study <= 4) { score += 2; feedback.push('Good study time!'); }
+      else if (study > 0 && study < 2) { score += 1; feedback.push('Try to study a bit more.'); }
+      else if (study > 4) { score += 1; feedback.push('Don\'t overwork yourself!'); }
+      else { feedback.push('No study time entered.'); }
+      // Extracurricular: 1-2 hours optimal
+      if (extra >= 1 && extra <= 2) { score += 1; feedback.push('Nice extracurricular balance!'); }
+      else if (extra > 2) { score += 0.5; feedback.push('Lots of extracurriculars!'); }
+      else if (extra > 0) { score += 0.5; feedback.push('Consider joining more activities.'); }
+      else { feedback.push('No extracurriculars entered.'); }
+      // Sleep: 8-9 hours optimal
+      if (sleep >= 8 && sleep <= 9) { score += 2; feedback.push('Great sleep habits!'); }
+      else if (sleep >= 7 && sleep < 8) { score += 1; feedback.push('Pretty good sleep.'); }
+      else if (sleep > 9) { score += 1; feedback.push('You might be oversleeping.'); }
+      else if (sleep > 0 && sleep < 7) { feedback.push('Try to get more sleep!'); }
+      else { feedback.push('No sleep entered.'); }
+      // Clamp score to 0-5
+      score = Math.max(0, Math.min(5, score));
+      // Star display
+      let stars = '';
+      const starFilled = '⭐️';
+      const starEmpty = '✩';
+      for (let i = 1; i <= 5; i++) {
+        stars += i <= Math.round(score) ? starFilled : starEmpty;
+      }
+      let resultMsg = `Your Study Life Rating: <span style=\"color:#f5b50a;font-size:22px;\">${stars}</span><br>`;
+      resultMsg += feedback.join(' ');
+      if (slcResult) slcResult.innerHTML = resultMsg;
+    });
+  }
   // --- Event Add Logic (datetime-local input) ---
   const addEventBtn = document.getElementById('addEventBtn');
   const eventDateTimeInput = document.getElementById('eventDateTime');
