@@ -169,7 +169,8 @@ chrome.webNavigation.onCompleted.addListener((details) => {
               popup.style.right = '30px';
               popup.style.left = 'auto';
               popup.style.top = 'auto';
-              popup.style.transform = 'none';
+              popup.style.transform = 'translateY(30px) scale(0.95)';
+              popup.style.opacity = '0';
               popup.style.zIndex = 2147483647;
               popup.style.background = 'linear-gradient(90deg, #e74c3c 60%, #ff7675 100%)';
               popup.style.color = '#fff';
@@ -181,7 +182,7 @@ chrome.webNavigation.onCompleted.addListener((details) => {
               popup.style.fontWeight = '500';
               popup.style.maxWidth = '340px';
               popup.style.pointerEvents = 'auto';
-              popup.style.transition = 'opacity 0.3s';
+              popup.style.transition = 'opacity 0.4s cubic-bezier(.4,2,.3,1), transform 0.5s cubic-bezier(.4,2,.3,1)';
               popup.style.display = 'flex';
               popup.style.alignItems = 'center';
               popup.style.gap = '12px';
@@ -206,10 +207,15 @@ chrome.webNavigation.onCompleted.addListener((details) => {
               popup.appendChild(msg);
               popup.appendChild(closeBtn);
               document.body.appendChild(popup);
+              // Animate in (show instantly)
+              popup.style.opacity = '1';
+              popup.style.transform = 'translateY(0) scale(1)';
+              // Animate out (close after 3s)
               setTimeout(() => {
-                popup.style.opacity = '0.0';
-                setTimeout(() => popup.remove(), 400);
-              }, 6000);
+                popup.style.opacity = '0';
+                popup.style.transform = 'translateY(30px) scale(0.95)';
+                setTimeout(() => popup.remove(), 300);
+              }, 3000);
             } catch (e) {
               console.error('Student Organizer popup injection failed (isolated):', e);
             }
@@ -299,7 +305,8 @@ chrome.webNavigation.onCompleted.addListener((details) => {
               popup.style.right = '30px';
               popup.style.left = 'auto';
               popup.style.top = 'auto';
-              popup.style.transform = 'none';
+              popup.style.transform = 'translateY(30px) scale(0.95)';
+              popup.style.opacity = '0';
               popup.style.zIndex = 2147483647;
               popup.style.background = 'linear-gradient(90deg, #e74c3c 60%, #ff7675 100%)';
               popup.style.color = '#fff';
@@ -311,7 +318,7 @@ chrome.webNavigation.onCompleted.addListener((details) => {
               popup.style.fontWeight = '500';
               popup.style.maxWidth = '340px';
               popup.style.pointerEvents = 'auto';
-              popup.style.transition = 'opacity 0.3s';
+              popup.style.transition = 'opacity 0.4s cubic-bezier(.4,2,.3,1), transform 0.5s cubic-bezier(.4,2,.3,1)';
               popup.style.display = 'flex';
               popup.style.alignItems = 'center';
               popup.style.gap = '12px';
@@ -336,8 +343,15 @@ chrome.webNavigation.onCompleted.addListener((details) => {
               popup.appendChild(msg);
               popup.appendChild(closeBtn);
               document.body.appendChild(popup);
+              // Animate in
               setTimeout(() => {
-                popup.style.opacity = '0.0';
+                popup.style.opacity = '1';
+                popup.style.transform = 'translateY(0) scale(1)';
+              }, 10);
+              // Animate out
+              setTimeout(() => {
+                popup.style.opacity = '0';
+                popup.style.transform = 'translateY(30px) scale(0.95)';
                 setTimeout(() => popup.remove(), 400);
               }, 6000);
             } catch (e) {
