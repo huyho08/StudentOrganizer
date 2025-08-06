@@ -16,12 +16,29 @@ function loadDeadlines() {
     const deadlineList = document.getElementById('deadlineList');
     const deadlines = JSON.parse(localStorage.getItem('deadlines') || '[]');
     if (deadlineList) deadlineList.innerHTML = '';
+    const now = new Date();
     deadlines.forEach((deadline, idx) => {
       const div = document.createElement('div');
       div.style.display = 'flex';
       div.style.alignItems = 'center';
       div.style.justifyContent = 'space-between';
+      // Check if overdue
+      const isOverdue = deadline.date && new Date(deadline.date) < now;
       div.textContent = `${deadline.text} (${new Date(deadline.date).toLocaleString()})`;
+      if (isOverdue) {
+        div.style.background = '#ffeaea';
+        div.style.color = '#e74c3c';
+        div.style.fontWeight = 'bold';
+        div.textContent += ' - OVERDUE!';
+        // Show notification if not in extension popup
+        const isExtensionPopup = window.location.protocol === 'chrome-extension:' && window.location.pathname.endsWith('popup.html');
+        if (!isExtensionPopup) {
+          showCustomPopup(
+            `Overdue: ${escapeHtml(deadline.text)} (${new Date(deadline.date).toLocaleString()})`,
+            'error'
+          );
+        }
+      }
       // Remove button
       const delBtn = document.createElement('button');
       delBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#e74c3c"/><line x1="4.5" y1="4.5" x2="9.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
@@ -44,7 +61,6 @@ function loadDeadlines() {
           let deadlinesArr = JSON.parse(localStorage.getItem('deadlines') || '[]');
           deadlinesArr.splice(idx, 1);
           localStorage.setItem('deadlines', JSON.stringify(deadlinesArr));
-          // Sync to chrome.storage.local for background.js
           chrome.storage.local.set({ deadlines: deadlinesArr });
           loadDeadlines();
         }, 180);
@@ -57,53 +73,6 @@ function loadDeadlines() {
     showCustomPopup('Error loading deadlines.', 'error');
   }
 }
-document.addEventListener('DOMContentLoaded', () => {
-  // --- Study Life Calculator Logic ---
-  const slcAge = document.getElementById('slc-age');
-  const slcStudy = document.getElementById('slc-study');
-  const slcExtra = document.getElementById('slc-extra');
-  const slcSleep = document.getElementById('slc-sleep');
-  const slcBtn = document.getElementById('slc-calc-btn');
-  const slcResult = document.getElementById('slc-result');
-
-  if (slcBtn) {
-    slcBtn.addEventListener('click', () => {
-      const age = Number(slcAge.value);
-      const study = Number(slcStudy.value);
-      const extra = Number(slcExtra.value);
-      const sleep = Number(slcSleep.value);
-      let score = 0;
-      let feedback = [];
-      // Study: 2-4 hours optimal
-      if (study >= 2 && study <= 4) { score += 2; feedback.push('Good study time!'); }
-      else if (study > 0 && study < 2) { score += 1; feedback.push('Try to study a bit more.'); }
-      else if (study > 4) { score += 1; feedback.push('Don\'t overwork yourself!'); }
-      else { feedback.push('No study time entered.'); }
-      // Extracurricular: 1-2 hours optimal
-      if (extra >= 1 && extra <= 2) { score += 1; feedback.push('Nice extracurricular balance!'); }
-      else if (extra > 2) { score += 0.5; feedback.push('Lots of extracurriculars!'); }
-      else if (extra > 0) { score += 0.5; feedback.push('Consider joining more activities.'); }
-      else { feedback.push('No extracurriculars entered.'); }
-      // Sleep: 8-9 hours optimal
-      if (sleep >= 8 && sleep <= 9) { score += 2; feedback.push('Great sleep habits!'); }
-      else if (sleep >= 7 && sleep < 8) { score += 1; feedback.push('Pretty good sleep.'); }
-      else if (sleep > 9) { score += 1; feedback.push('You might be oversleeping.'); }
-      else if (sleep > 0 && sleep < 7) { feedback.push('Try to get more sleep!'); }
-      else { feedback.push('No sleep entered.'); }
-      // Clamp score to 0-5
-      score = Math.max(0, Math.min(5, score));
-      // Star display
-      let stars = '';
-      const starFilled = '⭐️';
-      const starEmpty = '✩';
-      for (let i = 1; i <= 5; i++) {
-        stars += i <= Math.round(score) ? starFilled : starEmpty;
-      }
-      let resultMsg = `Your Study Life Rating: <span style=\"color:#f5b50a;font-size:22px;\">${stars}</span><br>`;
-      resultMsg += feedback.join(' ');
-      if (slcResult) slcResult.innerHTML = resultMsg;
-    });
-  }
   // --- Event Add Logic (datetime-local input) ---
   const addEventBtn = document.getElementById('addEventBtn');
   const eventDateTimeInput = document.getElementById('eventDateTime');
@@ -159,11 +128,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Task List Logic ---
-  const taskInput = document.getElementById('taskInput');
-  const addTaskBtn = document.getElementById('addTaskBtn');
-  const personalTaskList = document.getElementById('personalTaskList');
-  const schoolTaskList = document.getElementById('schoolTaskList');
-  // Removed manual sorting dropdowns; sorting will be automatic using keywords.json
+const taskInput = document.getElementById('taskInput');
+const addTaskBtn = document.getElementById('addTaskBtn');
+const personalTaskList = document.getElementById('personalTaskList');
+const schoolTaskList = document.getElementById('schoolTaskList');
+// Remove search bar and priority selector if present in DOM
+const searchBar = document.getElementById('searchBar');
+if (searchBar && searchBar.parentNode) searchBar.parentNode.removeChild(searchBar);
+const prioSel = document.getElementById('prioritySelect');
+if (prioSel && prioSel.parentNode) prioSel.parentNode.removeChild(prioSel);
 
   function escapeHtml(text) {
   if (typeof text !== 'string') text = String(text || '');
@@ -289,18 +262,20 @@ document.addEventListener('DOMContentLoaded', () => {
           // Render lists
           function renderTaskList(list, arr, type) {
             if (list) list.innerHTML = '';
+            const now = new Date();
             arr.forEach(obj => {
               let div = document.createElement('div');
               div.style.display = 'flex';
               div.style.alignItems = 'center';
-              div.style.background = '#eaf1fb';
+              div.style.background = '#f7faff';
               div.style.color = '#2d6cdf';
-              div.style.borderRadius = '5px';
-              div.style.padding = '5px 10px';
-              div.style.marginBottom = '4px';
-              div.style.fontSize = '14px';
+              div.style.borderRadius = '7px';
+              div.style.padding = '7px 14px';
+              div.style.marginBottom = '6px';
+              div.style.fontSize = '15px';
               div.style.letterSpacing = '0.2px';
               div.style.boxShadow = '0 0 0 rgba(45,108,223,0)';
+              div.style.fontFamily = 'Inter, Segoe UI, Arial, sans-serif';
               div.onmouseenter = () => {
                 div.style.boxShadow = '0 4px 16px rgba(45,108,223,0.13)';
                 div.style.transform = 'scale(1.03)';
@@ -313,19 +288,40 @@ document.addEventListener('DOMContentLoaded', () => {
               let textSpan = document.createElement('span');
               textSpan.textContent = escapeHtml(obj.text);
               textSpan.style.flex = '1';
-              // Remove button
+              textSpan.style.fontFamily = 'Inter, Segoe UI, Arial, sans-serif';
+              // Overdue logic for tasks
+              let isOverdue = false;
+              if (obj.date) {
+                const taskDate = new Date(obj.date);
+                if (taskDate < now) {
+                  isOverdue = true;
+                  div.style.background = '#ffeaea';
+                  div.style.color = '#e74c3c';
+                  div.style.fontWeight = 'bold';
+                  textSpan.textContent += ' - OVERDUE!';
+                  // Show notification if not in extension popup
+                  const isExtensionPopup = window.location.protocol === 'chrome-extension:' && window.location.pathname.endsWith('popup.html');
+                  if (!isExtensionPopup) {
+                    showCustomPopup(
+                      `Overdue Task: ${escapeHtml(obj.text)} (${taskDate.toLocaleString()})`,
+                      'error'
+                    );
+                  }
+                }
+              }
+              // Remove button (SVG icon)
               let delBtn = document.createElement('button');
-              delBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#e74c3c"/><line x1="4.5" y1="4.5" x2="9.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><line x1="9.5" y1="4.5" x2="4.5" y2="9.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+              delBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="8" fill="#e74c3c"/><path d="M6 6l6 6M12 6l-6 6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>';
               delBtn.style.background = 'transparent';
               delBtn.style.border = 'none';
               delBtn.style.padding = '0 2px';
-              delBtn.style.marginLeft = '8px';
+              delBtn.style.marginLeft = '10px';
               delBtn.style.cursor = 'pointer';
               delBtn.style.display = 'flex';
               delBtn.style.alignItems = 'center';
               delBtn.style.transition = 'transform 0.18s cubic-bezier(.4,2,.3,1)';
-              delBtn.style.width = '22px';
-              delBtn.style.height = '22px';
+              delBtn.style.width = '26px';
+              delBtn.style.height = '26px';
               delBtn.onmouseover = () => {
                 delBtn.style.transform = 'scale(1.2)';
               };
@@ -386,165 +382,161 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (addTaskBtn && taskInput) {
-    addTaskBtn.addEventListener('click', () => {
-      const text = taskInput.value.trim();
-      if (!text) {
-        showCustomPopup('Please enter a task.','error');
-        return;
-      }
-      let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-      if (tasks.some(t => (typeof t === 'string' ? t === text : t.text === text))) {
-        showCustomPopup('Task already exists.','error');
-        return;
-      }
-      // Try to auto-sort using keywords.json
-      fetch('keywords.json')
-        .then(res => res.json())
-        .then(keywordsData => {
-          const personalKeywords = Array.isArray(keywordsData.personal) ? keywordsData.personal.map(k => k.toLowerCase()) : [];
-          const schoolKeywords = Array.isArray(keywordsData.school) ? keywordsData.school.map(k => k.toLowerCase()) : [];
-          const lowerText = text.toLowerCase();
-          let type = null;
-          if (personalKeywords.some(k => lowerText.includes(k))) {
-            type = 'personal';
-          } else if (schoolKeywords.some(k => lowerText.includes(k))) {
-            type = 'school';
+if (addTaskBtn && taskInput) {
+  addTaskBtn.addEventListener('click', () => {
+    const text = taskInput.value.trim();
+    if (!text) {
+      showCustomPopup('Please enter a task.','error');
+      return;
+    }
+    let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+    if (tasks.some(t => (typeof t === 'string' ? t === text : t.text === text))) {
+      showCustomPopup('Task already exists.','error');
+      return;
+    }
+    // Try to auto-sort using keywords.json
+    fetch('keywords.json')
+      .then(res => res.json())
+      .then(keywordsData => {
+        const personalKeywords = Array.isArray(keywordsData.personal) ? keywordsData.personal.map(k => k.toLowerCase()) : [];
+        const schoolKeywords = Array.isArray(keywordsData.school) ? keywordsData.school.map(k => k.toLowerCase()) : [];
+        const lowerText = text.toLowerCase();
+        let type = null;
+        if (personalKeywords.some(k => lowerText.includes(k))) {
+          type = 'personal';
+        } else if (schoolKeywords.some(k => lowerText.includes(k))) {
+          type = 'school';
+        }
+        if (type) {
+          tasks.push({ text, type });
+          localStorage.setItem('tasks', JSON.stringify(tasks));
+          taskInput.value = '';
+          loadTasks();
+          showCustomPopup('Task added!');
+        } else {
+          // Prompt user for category if unknown
+          let modal = document.createElement('div');
+          modal.style.position = 'fixed';
+          modal.style.top = '0';
+          modal.style.left = '0';
+          modal.style.width = '100vw';
+          modal.style.height = '100vh';
+          modal.style.background = 'rgba(0,0,0,0.18)';
+          modal.style.zIndex = 2147483648;
+          modal.style.display = 'flex';
+          modal.style.alignItems = 'center';
+          modal.style.justifyContent = 'center';
+          let box = document.createElement('div');
+          box.style.background = '#fff';
+          box.style.borderRadius = '10px';
+          box.style.boxShadow = '0 4px 24px rgba(45,108,223,0.13)';
+          box.style.padding = '28px 32px 22px 32px';
+          box.style.display = 'flex';
+          box.style.flexDirection = 'column';
+          box.style.alignItems = 'center';
+          box.style.gap = '18px';
+          let msg = document.createElement('div');
+          msg.textContent = `Which category should this task belong to?`;
+          msg.style.fontSize = '16px';
+          msg.style.color = '#2d6cdf';
+          msg.style.fontWeight = '600';
+          let taskSpan = document.createElement('div');
+          taskSpan.textContent = `"${text}"`;
+          taskSpan.style.fontSize = '15px';
+          taskSpan.style.color = '#444';
+          taskSpan.style.marginBottom = '8px';
+          let btnRow = document.createElement('div');
+          btnRow.style.display = 'flex';
+          btnRow.style.gap = '18px';
+          let personalBtn = document.createElement('button');
+          personalBtn.textContent = 'Personal';
+          personalBtn.style.background = 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
+          personalBtn.style.color = '#fff';
+          personalBtn.style.border = 'none';
+          personalBtn.style.borderRadius = '7px';
+          personalBtn.style.fontSize = '15px';
+          personalBtn.style.fontWeight = '600';
+          personalBtn.style.padding = '8px 22px';
+          personalBtn.style.cursor = 'pointer';
+          let schoolBtn = document.createElement('button');
+          schoolBtn.textContent = 'School';
+          schoolBtn.style.background = 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
+          schoolBtn.style.color = '#fff';
+          schoolBtn.style.border = 'none';
+          schoolBtn.style.borderRadius = '7px';
+          schoolBtn.style.fontSize = '15px';
+          schoolBtn.style.fontWeight = '600';
+          schoolBtn.style.padding = '8px 22px';
+          schoolBtn.style.cursor = 'pointer';
+          // Add Neither button
+          let neitherBtn = document.createElement('button');
+          neitherBtn.textContent = 'Neither';
+          neitherBtn.style.background = '#eaeaea';
+          neitherBtn.style.color = '#444';
+          neitherBtn.style.border = 'none';
+          neitherBtn.style.borderRadius = '7px';
+          neitherBtn.style.fontSize = '15px';
+          neitherBtn.style.fontWeight = '600';
+          neitherBtn.style.padding = '8px 22px';
+          neitherBtn.style.cursor = 'pointer';
+
+          // Helper to update keywords.json
+          function updateKeywordsFile(keyword, category) {
+            fetch('keywords.json')
+              .then(res => res.json())
+              .then(data => {
+                if (!data[category]) data[category] = [];
+                if (!data[category].includes(keyword)) {
+                  data[category].push(keyword);
+                  // Save updated keywords.json (will only work in dev/local, not in production extension)
+                  fetch('keywords.json', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                  });
+                }
+              });
           }
-          if (type) {
-            tasks.push({ text, type });
+
+          personalBtn.onclick = () => {
+            tasks.push({ text, type: 'personal' });
             localStorage.setItem('tasks', JSON.stringify(tasks));
+            updateKeywordsFile(text.toLowerCase(), 'personal');
+            document.body.removeChild(modal);
             taskInput.value = '';
-            loadTasks();
-            showCustomPopup('Task added!');
-          } else {
-            // Prompt user for category if unknown
-            let modal = document.createElement('div');
-            modal.style.position = 'fixed';
-            modal.style.top = '0';
-            modal.style.left = '0';
-            modal.style.width = '100vw';
-            modal.style.height = '100vh';
-            modal.style.background = 'rgba(0,0,0,0.18)';
-            modal.style.zIndex = 2147483648;
-            modal.style.display = 'flex';
-            modal.style.alignItems = 'center';
-            modal.style.justifyContent = 'center';
-            let box = document.createElement('div');
-            box.style.background = '#fff';
-            box.style.borderRadius = '10px';
-            box.style.boxShadow = '0 4px 24px rgba(45,108,223,0.13)';
-            box.style.padding = '28px 32px 22px 32px';
-            box.style.display = 'flex';
-            box.style.flexDirection = 'column';
-            box.style.alignItems = 'center';
-            box.style.gap = '18px';
-            let msg = document.createElement('div');
-            msg.textContent = `Which category should this task belong to?`;
-            msg.style.fontSize = '16px';
-            msg.style.color = '#2d6cdf';
-            msg.style.fontWeight = '600';
-            let taskSpan = document.createElement('div');
-            taskSpan.textContent = `"${text}"`;
-            taskSpan.style.fontSize = '15px';
-            taskSpan.style.color = '#444';
-            taskSpan.style.marginBottom = '8px';
-            let btnRow = document.createElement('div');
-            btnRow.style.display = 'flex';
-            btnRow.style.gap = '18px';
-            let personalBtn = document.createElement('button');
-            personalBtn.textContent = 'Personal';
-            personalBtn.style.background = 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
-            personalBtn.style.color = '#fff';
-            personalBtn.style.border = 'none';
-            personalBtn.style.borderRadius = '7px';
-            personalBtn.style.fontSize = '15px';
-            personalBtn.style.fontWeight = '600';
-            personalBtn.style.padding = '8px 22px';
-            personalBtn.style.cursor = 'pointer';
-            let schoolBtn = document.createElement('button');
-            schoolBtn.textContent = 'School';
-            schoolBtn.style.background = 'linear-gradient(90deg, #2d6cdf 60%, #5eaefd 100%)';
-            schoolBtn.style.color = '#fff';
-            schoolBtn.style.border = 'none';
-            schoolBtn.style.borderRadius = '7px';
-            schoolBtn.style.fontSize = '15px';
-            schoolBtn.style.fontWeight = '600';
-            schoolBtn.style.padding = '8px 22px';
-            schoolBtn.style.cursor = 'pointer';
-            // Add Neither button
-            let neitherBtn = document.createElement('button');
-            neitherBtn.textContent = 'Neither';
-            neitherBtn.style.background = '#eaeaea';
-            neitherBtn.style.color = '#444';
-            neitherBtn.style.border = 'none';
-            neitherBtn.style.borderRadius = '7px';
-            neitherBtn.style.fontSize = '15px';
-            neitherBtn.style.fontWeight = '600';
-            neitherBtn.style.padding = '8px 22px';
-            neitherBtn.style.cursor = 'pointer';
-
-            // Helper to update keywords.json
-            function updateKeywordsFile(keyword, category) {
-              fetch('keywords.json')
-                .then(res => res.json())
-                .then(data => {
-                  if (!data[category]) data[category] = [];
-                  if (!data[category].includes(keyword)) {
-                    data[category].push(keyword);
-                    // Save updated keywords.json (will only work in dev/local, not in production extension)
-                    fetch('keywords.json', {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(data)
-                    });
-                  }
-                });
-            }
-
-            personalBtn.onclick = () => {
-              tasks.push({ text, type: 'personal' });
-              localStorage.setItem('tasks', JSON.stringify(tasks));
-              // Add the keyword to keywords.json (lowercase for consistency)
-              updateKeywordsFile(text.toLowerCase(), 'personal');
-              document.body.removeChild(modal);
-              taskInput.value = '';
-              // Wait a bit to ensure keywords.json is updated before reloading tasks
-              setTimeout(() => {
-                loadTasks();
-                showCustomPopup('Task added!');
-              }, 200);
-            };
-            schoolBtn.onclick = () => {
-              tasks.push({ text, type: 'school' });
-              localStorage.setItem('tasks', JSON.stringify(tasks));
-              // Add the keyword to keywords.json (lowercase for consistency)
-              updateKeywordsFile(text.toLowerCase(), 'school');
-              document.body.removeChild(modal);
-              taskInput.value = '';
-              // Wait a bit to ensure keywords.json is updated before reloading tasks
-              setTimeout(() => {
-                loadTasks();
-                showCustomPopup('Task added!');
-              }, 200);
-            };
-            neitherBtn.onclick = () => {
-              document.body.removeChild(modal);
-              taskInput.value = '';
-              showCustomPopup('Task not categorized.');
-            };
-            btnRow.appendChild(personalBtn);
-            btnRow.appendChild(schoolBtn);
-            btnRow.appendChild(neitherBtn);
-            box.appendChild(msg);
-            box.appendChild(taskSpan);
-            box.appendChild(btnRow);
-            modal.appendChild(box);
-            document.body.appendChild(modal);
-          }
-        });
-    });
-  }
+            setTimeout(() => {
+              loadTasks();
+              showCustomPopup('Task added!');
+            }, 200);
+          };
+          schoolBtn.onclick = () => {
+            tasks.push({ text, type: 'school' });
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            updateKeywordsFile(text.toLowerCase(), 'school');
+            document.body.removeChild(modal);
+            taskInput.value = '';
+            setTimeout(() => {
+              loadTasks();
+              showCustomPopup('Task added!');
+            }, 200);
+          };
+          neitherBtn.onclick = () => {
+            document.body.removeChild(modal);
+            taskInput.value = '';
+            showCustomPopup('Task not categorized.');
+          };
+          box.appendChild(msg);
+          box.appendChild(taskSpan);
+          btnRow.appendChild(personalBtn);
+          btnRow.appendChild(schoolBtn);
+          btnRow.appendChild(neitherBtn);
+          box.appendChild(btnRow);
+          modal.appendChild(box);
+          document.body.appendChild(modal);
+        }
+      });
+  });
+}
 
   // Initial load
   loadTasks();
@@ -555,6 +547,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Show reminder popup on new tab if enabled ---
   function showDeadlineReminderIfNeeded() {
     if (!reminderToggle) return;
+    // Only show notifications if NOT inside the extension popup (i.e., not running as a popup window)
+    // Heuristic: If window.location.protocol is 'chrome-extension:' and window.location.pathname ends with 'popup.html', do not show
+    // Remove this check so notifications show in both popup and new tab
     chrome.storage.local.get(['reminderToggle'], (result) => {
       // Treat undefined/null as enabled (default ON)
       const remindersEnabled = (typeof result.reminderToggle === 'undefined' || result.reminderToggle === null) ? true : !!result.reminderToggle;
@@ -562,10 +557,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       const deadlines = JSON.parse(localStorage.getItem('deadlines') || '[]');
-      if (!deadlines.length) return;
+      const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
       const now = new Date();
+      // Overdue deadlines
       let closest = null;
       let minDiff = Infinity;
+      let overdueDeadlines = [];
       deadlines.forEach(d => {
         if (!d.date) return;
         const diff = new Date(d.date) - now;
@@ -573,36 +570,44 @@ document.addEventListener('DOMContentLoaded', () => {
           minDiff = diff;
           closest = d;
         }
+        if (diff < 0) {
+          overdueDeadlines.push(d);
+        }
       });
-      if (closest) {
-        // Only show on actual browser tabs (not extension popup or new tab)
-        const isRealTab = (
-          window.location.protocol === 'http:' ||
-          window.location.protocol === 'https:' ||
-          window.location.protocol === 'file:'
-        );
-        if (isRealTab) {
-          // Show custom popup as before
+      if (overdueDeadlines.length > 0) {
+        overdueDeadlines.forEach(od => {
           showCustomPopup(
-            `Upcoming deadline: ${escapeHtml(closest.text)} (${new Date(closest.date).toLocaleString()})`,
+            `Overdue: ${escapeHtml(od.text)} (${new Date(od.date).toLocaleString()})`,
+            'error'
+          );
+        });
+      }
+      // Overdue tasks
+      let overdueTasks = [];
+      tasks.forEach(t => {
+        if (t.date) {
+          const taskDate = new Date(t.date);
+          if (taskDate < now) {
+            overdueTasks.push(t);
+          }
+        }
+      });
+      if (overdueTasks.length > 0) {
+        overdueTasks.forEach(ot => {
+          showCustomPopup(
+            `Overdue Task: ${escapeHtml(ot.text)} (${new Date(ot.date).toLocaleString()})`,
+            'error'
+          );
+        });
+      }
+      // Upcoming deadline
+      if (closest) {
+        const diffHrs = (new Date(closest.date) - now) / (1000 * 60 * 60);
+        if (diffHrs <= 24) {
+          showCustomPopup(
+            `Upcoming: ${escapeHtml(closest.text)} (${new Date(closest.date).toLocaleString()})`,
             'info'
           );
-          // Also show system notification if supported
-          if (window.Notification && Notification.permission === 'granted') {
-            new Notification('Upcoming deadline', {
-              body: `${closest.text} (${new Date(closest.date).toLocaleString()})`,
-              icon: 'icon.png'
-            });
-          } else if (window.Notification && Notification.permission !== 'denied') {
-            Notification.requestPermission().then(permission => {
-              if (permission === 'granted') {
-                new Notification('Upcoming deadline', {
-                  body: `${closest.text} (${new Date(closest.date).toLocaleString()})`,
-                  icon: 'icon.png'
-                });
-              }
-            });
-          }
         }
       }
     });
@@ -638,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Call after toggle and deadlines loaded
   setTimeout(showDeadlineReminderIfNeeded, 200);
-});
+;
 
 // Custom visually appealing popup system
 function showCustomPopup(message, type = 'info') {

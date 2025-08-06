@@ -1,8 +1,8 @@
 // Outlook Calendar (Microsoft Graph API) integration
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.action === 'createEvent') {
-    // 1. Get Microsoft access token using chrome.identity.launchWebAuthFlow
-    const clientId = 'YOUR_AZURE_APP_CLIENT_ID'; // Replace with your Azure app's client ID
+
+    const clientId = 'YOUR_AZURE_APP_CLIENT_ID'; // this does not work
     const redirectUri = chrome.identity.getRedirectURL('oauth2');
     const scopes = 'openid profile offline_access Calendars.ReadWrite';
     const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
@@ -62,14 +62,16 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 chrome.webNavigation.onCompleted.addListener((details) => {
   // Only inject into main frame, not iframes
   if (details.frameId !== 0) return;
-  chrome.storage.local.get(['deadlines', 'reminderToggle'], (result) => {
+  chrome.storage.local.get(['deadlines', 'tasks', 'reminderToggle'], (result) => {
     const deadlines = result.deadlines || [];
-    // Check if reminders are enabled (default to true if undefined)
+    const tasks = result.tasks || [];
     const remindersEnabled = result.reminderToggle !== false;
-    if (!remindersEnabled || !deadlines.length) return;
+    if (!remindersEnabled) return;
     const now = new Date();
     let closest = null;
     let minDiff = Infinity;
+    let overdueDeadlines = [];
+    let overdueTasks = [];
     deadlines.forEach(d => {
       if (!d.date) return;
       const diff = new Date(d.date) - now;
@@ -77,16 +79,153 @@ chrome.webNavigation.onCompleted.addListener((details) => {
         minDiff = diff;
         closest = d;
       }
+      if (diff < 0) {
+        overdueDeadlines.push(d);
+      }
     });
+    tasks.forEach(t => {
+      if (t.date) {
+        const taskDate = new Date(t.date);
+        if (taskDate < now) {
+          overdueTasks.push(t);
+        }
+      }
+    });
+    // Show overdue deadline notifications
+    if (overdueDeadlines.length > 0 && details.tabId) {
+      overdueDeadlines.forEach(od => {
+        chrome.scripting.executeScript({
+          target: { tabId: details.tabId },
+          world: "MAIN",
+          func: (text, dateStr) => {
+            const popup = document.createElement('div');
+            popup.id = 'student-organizer-reminder';
+            popup.style.position = 'fixed';
+            popup.style.bottom = '30px';
+            popup.style.right = '30px';
+            popup.style.left = 'auto';
+            popup.style.top = 'auto';
+            popup.style.transform = 'none';
+            popup.style.zIndex = 2147483647;
+            popup.style.background = 'linear-gradient(90deg, #e74c3c 60%, #ff7675 100%)';
+            popup.style.color = '#fff';
+            popup.style.padding = '18px 32px 16px 24px';
+            popup.style.borderRadius = '12px';
+            popup.style.boxShadow = '0 4px 16px rgba(45,108,223,0.13)';
+            popup.style.fontSize = '16px';
+            popup.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+            popup.style.fontWeight = '500';
+            popup.style.maxWidth = '340px';
+            popup.style.pointerEvents = 'auto';
+            popup.style.transition = 'opacity 0.3s';
+            popup.style.display = 'flex';
+            popup.style.alignItems = 'center';
+            popup.style.gap = '12px';
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '\u00D7';
+            closeBtn.style.background = 'transparent';
+            closeBtn.style.border = 'none';
+            closeBtn.style.color = '#fff';
+            closeBtn.style.fontSize = '22px';
+            closeBtn.style.cursor = 'pointer';
+            closeBtn.style.fontWeight = 'bold';
+            closeBtn.style.lineHeight = '1';
+            closeBtn.style.padding = '0 8px 0 0';
+            closeBtn.setAttribute('aria-label', 'Close popup');
+            closeBtn.onclick = () => popup.remove();
+            const icon = document.createElement('span');
+            icon.innerHTML = '&#9888;';
+            icon.style.fontSize = '20px';
+            const msg = document.createElement('span');
+            msg.textContent = `${text} (${dateStr})`;
+            popup.appendChild(icon);
+            popup.appendChild(msg);
+            popup.appendChild(closeBtn);
+            document.body.appendChild(popup);
+            setTimeout(() => {
+              popup.style.opacity = '0.0';
+              setTimeout(() => popup.remove(), 400);
+            }, 6000);
+          },
+          args: [
+            `Overdue deadline: ${od.text}`,
+            new Date(od.date).toLocaleString()
+          ]
+        });
+      });
+    }
+    // Show overdue task notifications
+    if (overdueTasks.length > 0 && details.tabId) {
+      overdueTasks.forEach(ot => {
+        chrome.scripting.executeScript({
+          target: { tabId: details.tabId },
+          world: "MAIN",
+          func: (text, dateStr) => {
+    // ...existing code...
+            const popup = document.createElement('div');
+            popup.id = 'student-organizer-reminder';
+            popup.style.position = 'fixed';
+            popup.style.bottom = '30px';
+            popup.style.right = '30px';
+            popup.style.left = 'auto';
+            popup.style.top = 'auto';
+            popup.style.transform = 'none';
+            popup.style.zIndex = 2147483647;
+            popup.style.background = 'linear-gradient(90deg, #e74c3c 60%, #ff7675 100%)';
+            popup.style.color = '#fff';
+            popup.style.padding = '18px 32px 16px 24px';
+            popup.style.borderRadius = '12px';
+            popup.style.boxShadow = '0 4px 16px rgba(45,108,223,0.13)';
+            popup.style.fontSize = '16px';
+            popup.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+            popup.style.fontWeight = '500';
+            popup.style.maxWidth = '340px';
+            popup.style.pointerEvents = 'auto';
+            popup.style.transition = 'opacity 0.3s';
+            popup.style.display = 'flex';
+            popup.style.alignItems = 'center';
+            popup.style.gap = '12px';
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '\u00D7';
+            closeBtn.style.background = 'transparent';
+            closeBtn.style.border = 'none';
+            closeBtn.style.color = '#fff';
+            closeBtn.style.fontSize = '22px';
+            closeBtn.style.cursor = 'pointer';
+            closeBtn.style.fontWeight = 'bold';
+            closeBtn.style.lineHeight = '1';
+            closeBtn.style.padding = '0 8px 0 0';
+            closeBtn.setAttribute('aria-label', 'Close popup');
+            closeBtn.onclick = () => popup.remove();
+            const icon = document.createElement('span');
+            icon.innerHTML = '&#9888;';
+            icon.style.fontSize = '20px';
+            const msg = document.createElement('span');
+            msg.textContent = `${text} (${dateStr})`;
+            popup.appendChild(icon);
+            popup.appendChild(msg);
+            popup.appendChild(closeBtn);
+            document.body.appendChild(popup);
+            setTimeout(() => {
+              popup.style.opacity = '0.0';
+              setTimeout(() => popup.remove(), 400);
+            }, 6000);
+          },
+          args: [
+            `Overdue task: ${ot.text}`,
+            new Date(ot.date).toLocaleString()
+          ]
+        });
+      });
+    }
+    // Upcoming deadline notification (unchanged)
     if (closest && details.tabId) {
       chrome.scripting.executeScript({
         target: { tabId: details.tabId },
         world: "MAIN",
         func: (text, dateStr) => {
-          // Remove existing popup if present
           let old = document.getElementById('student-organizer-reminder');
           if (old) old.remove();
-          // Create popup at bottom right of the whole screen
           const popup = document.createElement('div');
           popup.id = 'student-organizer-reminder';
           popup.style.position = 'fixed';
@@ -110,8 +249,6 @@ chrome.webNavigation.onCompleted.addListener((details) => {
           popup.style.display = 'flex';
           popup.style.alignItems = 'center';
           popup.style.gap = '12px';
-
-          // Close button
           const closeBtn = document.createElement('button');
           closeBtn.innerHTML = '\u00D7';
           closeBtn.style.background = 'transparent';
@@ -124,22 +261,15 @@ chrome.webNavigation.onCompleted.addListener((details) => {
           closeBtn.style.padding = '0 8px 0 0';
           closeBtn.setAttribute('aria-label', 'Close popup');
           closeBtn.onclick = () => popup.remove();
-
-          // Icon
           const icon = document.createElement('span');
           icon.innerHTML = '&#9432;';
           icon.style.fontSize = '20px';
-
-          // Message
           const msg = document.createElement('span');
           msg.textContent = `${text} (${dateStr})`;
-
           popup.appendChild(icon);
           popup.appendChild(msg);
           popup.appendChild(closeBtn);
-
           document.body.appendChild(popup);
-
           setTimeout(() => {
             popup.style.opacity = '0.0';
             setTimeout(() => popup.remove(), 400);
