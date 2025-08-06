@@ -98,6 +98,7 @@ chrome.webNavigation.onCompleted.addListener((details) => {
           target: { tabId: details.tabId },
           world: "MAIN",
           func: (text, dateStr) => {
+            try {
             const popup = document.createElement('div');
             popup.id = 'student-organizer-reminder';
             popup.style.position = 'fixed';
@@ -146,6 +147,72 @@ chrome.webNavigation.onCompleted.addListener((details) => {
               popup.style.opacity = '0.0';
               setTimeout(() => popup.remove(), 400);
             }, 6000);
+            } catch (e) {
+              console.error('Student Organizer popup injection failed:', e);
+            }
+          },
+          args: [
+            `Overdue deadline: ${od.text}`,
+            new Date(od.date).toLocaleString()
+          ]
+        });
+        // Try also injecting in ISOLATED world for sites that block MAIN
+        chrome.scripting.executeScript({
+          target: { tabId: details.tabId },
+          world: "ISOLATED",
+          func: (text, dateStr) => {
+            try {
+              const popup = document.createElement('div');
+              popup.id = 'student-organizer-reminder';
+              popup.style.position = 'fixed';
+              popup.style.bottom = '30px';
+              popup.style.right = '30px';
+              popup.style.left = 'auto';
+              popup.style.top = 'auto';
+              popup.style.transform = 'none';
+              popup.style.zIndex = 2147483647;
+              popup.style.background = 'linear-gradient(90deg, #e74c3c 60%, #ff7675 100%)';
+              popup.style.color = '#fff';
+              popup.style.padding = '18px 32px 16px 24px';
+              popup.style.borderRadius = '12px';
+              popup.style.boxShadow = '0 4px 16px rgba(45,108,223,0.13)';
+              popup.style.fontSize = '16px';
+              popup.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+              popup.style.fontWeight = '500';
+              popup.style.maxWidth = '340px';
+              popup.style.pointerEvents = 'auto';
+              popup.style.transition = 'opacity 0.3s';
+              popup.style.display = 'flex';
+              popup.style.alignItems = 'center';
+              popup.style.gap = '12px';
+              const closeBtn = document.createElement('button');
+              closeBtn.innerHTML = '\u00D7';
+              closeBtn.style.background = 'transparent';
+              closeBtn.style.border = 'none';
+              closeBtn.style.color = '#fff';
+              closeBtn.style.fontSize = '22px';
+              closeBtn.style.cursor = 'pointer';
+              closeBtn.style.fontWeight = 'bold';
+              closeBtn.style.lineHeight = '1';
+              closeBtn.style.padding = '0 8px 0 0';
+              closeBtn.setAttribute('aria-label', 'Close popup');
+              closeBtn.onclick = () => popup.remove();
+              const icon = document.createElement('span');
+              icon.innerHTML = '&#9888;';
+              icon.style.fontSize = '20px';
+              const msg = document.createElement('span');
+              msg.textContent = `${text} (${dateStr})`;
+              popup.appendChild(icon);
+              popup.appendChild(msg);
+              popup.appendChild(closeBtn);
+              document.body.appendChild(popup);
+              setTimeout(() => {
+                popup.style.opacity = '0.0';
+                setTimeout(() => popup.remove(), 400);
+              }, 6000);
+            } catch (e) {
+              console.error('Student Organizer popup injection failed (isolated):', e);
+            }
           },
           args: [
             `Overdue deadline: ${od.text}`,
@@ -161,55 +228,121 @@ chrome.webNavigation.onCompleted.addListener((details) => {
           target: { tabId: details.tabId },
           world: "MAIN",
           func: (text, dateStr) => {
-    // ...existing code...
-            const popup = document.createElement('div');
-            popup.id = 'student-organizer-reminder';
-            popup.style.position = 'fixed';
-            popup.style.bottom = '30px';
-            popup.style.right = '30px';
-            popup.style.left = 'auto';
-            popup.style.top = 'auto';
-            popup.style.transform = 'none';
-            popup.style.zIndex = 2147483647;
-            popup.style.background = 'linear-gradient(90deg, #e74c3c 60%, #ff7675 100%)';
-            popup.style.color = '#fff';
-            popup.style.padding = '18px 32px 16px 24px';
-            popup.style.borderRadius = '12px';
-            popup.style.boxShadow = '0 4px 16px rgba(45,108,223,0.13)';
-            popup.style.fontSize = '16px';
-            popup.style.fontFamily = 'Segoe UI, Arial, sans-serif';
-            popup.style.fontWeight = '500';
-            popup.style.maxWidth = '340px';
-            popup.style.pointerEvents = 'auto';
-            popup.style.transition = 'opacity 0.3s';
-            popup.style.display = 'flex';
-            popup.style.alignItems = 'center';
-            popup.style.gap = '12px';
-            const closeBtn = document.createElement('button');
-            closeBtn.innerHTML = '\u00D7';
-            closeBtn.style.background = 'transparent';
-            closeBtn.style.border = 'none';
-            closeBtn.style.color = '#fff';
-            closeBtn.style.fontSize = '22px';
-            closeBtn.style.cursor = 'pointer';
-            closeBtn.style.fontWeight = 'bold';
-            closeBtn.style.lineHeight = '1';
-            closeBtn.style.padding = '0 8px 0 0';
-            closeBtn.setAttribute('aria-label', 'Close popup');
-            closeBtn.onclick = () => popup.remove();
-            const icon = document.createElement('span');
-            icon.innerHTML = '&#9888;';
-            icon.style.fontSize = '20px';
-            const msg = document.createElement('span');
-            msg.textContent = `${text} (${dateStr})`;
-            popup.appendChild(icon);
-            popup.appendChild(msg);
-            popup.appendChild(closeBtn);
-            document.body.appendChild(popup);
-            setTimeout(() => {
-              popup.style.opacity = '0.0';
-              setTimeout(() => popup.remove(), 400);
-            }, 6000);
+            try {
+              const popup = document.createElement('div');
+              popup.id = 'student-organizer-reminder';
+              popup.style.position = 'fixed';
+              popup.style.bottom = '30px';
+              popup.style.right = '30px';
+              popup.style.left = 'auto';
+              popup.style.top = 'auto';
+              popup.style.transform = 'none';
+              popup.style.zIndex = 2147483647;
+              popup.style.background = 'linear-gradient(90deg, #e74c3c 60%, #ff7675 100%)';
+              popup.style.color = '#fff';
+              popup.style.padding = '18px 32px 16px 24px';
+              popup.style.borderRadius = '12px';
+              popup.style.boxShadow = '0 4px 16px rgba(45,108,223,0.13)';
+              popup.style.fontSize = '16px';
+              popup.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+              popup.style.fontWeight = '500';
+              popup.style.maxWidth = '340px';
+              popup.style.pointerEvents = 'auto';
+              popup.style.transition = 'opacity 0.3s';
+              popup.style.display = 'flex';
+              popup.style.alignItems = 'center';
+              popup.style.gap = '12px';
+              const closeBtn = document.createElement('button');
+              closeBtn.innerHTML = '\u00D7';
+              closeBtn.style.background = 'transparent';
+              closeBtn.style.border = 'none';
+              closeBtn.style.color = '#fff';
+              closeBtn.style.fontSize = '22px';
+              closeBtn.style.cursor = 'pointer';
+              closeBtn.style.fontWeight = 'bold';
+              closeBtn.style.lineHeight = '1';
+              closeBtn.style.padding = '0 8px 0 0';
+              closeBtn.setAttribute('aria-label', 'Close popup');
+              closeBtn.onclick = () => popup.remove();
+              const icon = document.createElement('span');
+              icon.innerHTML = '&#9888;';
+              icon.style.fontSize = '20px';
+              const msg = document.createElement('span');
+              msg.textContent = `${text} (${dateStr})`;
+              popup.appendChild(icon);
+              popup.appendChild(msg);
+              popup.appendChild(closeBtn);
+              document.body.appendChild(popup);
+              setTimeout(() => {
+                popup.style.opacity = '0.0';
+                setTimeout(() => popup.remove(), 400);
+              }, 6000);
+            } catch (e) {
+              console.error('Student Organizer popup injection failed:', e);
+            }
+          },
+          args: [
+            `Overdue task: ${ot.text}`,
+            new Date(ot.date).toLocaleString()
+          ]
+        });
+        // Try also injecting in ISOLATED world for sites that block MAIN
+        chrome.scripting.executeScript({
+          target: { tabId: details.tabId },
+          world: "ISOLATED",
+          func: (text, dateStr) => {
+            try {
+              const popup = document.createElement('div');
+              popup.id = 'student-organizer-reminder';
+              popup.style.position = 'fixed';
+              popup.style.bottom = '30px';
+              popup.style.right = '30px';
+              popup.style.left = 'auto';
+              popup.style.top = 'auto';
+              popup.style.transform = 'none';
+              popup.style.zIndex = 2147483647;
+              popup.style.background = 'linear-gradient(90deg, #e74c3c 60%, #ff7675 100%)';
+              popup.style.color = '#fff';
+              popup.style.padding = '18px 32px 16px 24px';
+              popup.style.borderRadius = '12px';
+              popup.style.boxShadow = '0 4px 16px rgba(45,108,223,0.13)';
+              popup.style.fontSize = '16px';
+              popup.style.fontFamily = 'Segoe UI, Arial, sans-serif';
+              popup.style.fontWeight = '500';
+              popup.style.maxWidth = '340px';
+              popup.style.pointerEvents = 'auto';
+              popup.style.transition = 'opacity 0.3s';
+              popup.style.display = 'flex';
+              popup.style.alignItems = 'center';
+              popup.style.gap = '12px';
+              const closeBtn = document.createElement('button');
+              closeBtn.innerHTML = '\u00D7';
+              closeBtn.style.background = 'transparent';
+              closeBtn.style.border = 'none';
+              closeBtn.style.color = '#fff';
+              closeBtn.style.fontSize = '22px';
+              closeBtn.style.cursor = 'pointer';
+              closeBtn.style.fontWeight = 'bold';
+              closeBtn.style.lineHeight = '1';
+              closeBtn.style.padding = '0 8px 0 0';
+              closeBtn.setAttribute('aria-label', 'Close popup');
+              closeBtn.onclick = () => popup.remove();
+              const icon = document.createElement('span');
+              icon.innerHTML = '&#9888;';
+              icon.style.fontSize = '20px';
+              const msg = document.createElement('span');
+              msg.textContent = `${text} (${dateStr})`;
+              popup.appendChild(icon);
+              popup.appendChild(msg);
+              popup.appendChild(closeBtn);
+              document.body.appendChild(popup);
+              setTimeout(() => {
+                popup.style.opacity = '0.0';
+                setTimeout(() => popup.remove(), 400);
+              }, 6000);
+            } catch (e) {
+              console.error('Student Organizer popup injection failed (isolated):', e);
+            }
           },
           args: [
             `Overdue task: ${ot.text}`,
