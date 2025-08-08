@@ -15,7 +15,7 @@
 
 To test or load the extension locally in Chrome:
 
-1. **Extract your extension folder** (make sure you have all files like `manifest.json`, scripts, icons, etc.)
+1. **Extract your extension folder** 
 
 2. **Open Chrome Extensions:**
    Type `chrome://extensions` in a new Chrome tab and press Enter.
