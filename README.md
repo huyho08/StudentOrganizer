@@ -28,4 +28,5 @@ To test or load the extension locally in Chrome:
 
 
 Copyright (c) 2025 Huy Ho
+
 This source code is licensed under the MIT license found in the LICENSE file in the root directory of this source tree.
