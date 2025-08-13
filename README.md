@@ -21,12 +21,13 @@ To test or load the extension locally in Chrome:
    Type `chrome://extensions` in a new Chrome tab and press Enter.
 
 3. **Enable Developer Mode:**
-   Toggle the switch in the top right corner of the Extensions page.
+   Toggle the switch in the top right corner of the Extensions page
 
 4. **Load the StudentOrganizer Extension:**
    Click the **Load unpacked** button and select the folder where your extension files are extracted.
 
 
 Copyright (c) 2025 Huy Ho
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](https://opensource.org/licenses/MIT)
 
 This source code is licensed under the MIT license found in the LICENSE file in the root directory of this source tree.
