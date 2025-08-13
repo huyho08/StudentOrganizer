@@ -6,8 +6,6 @@
 
 ![Google Chrome](https://img.shields.io/badge/Google%20Chrome-4285F4?style=for-the-badge&logo=GoogleChrome&logoColor=white)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](https://opensource.org/licenses/MIT)
-[![GitHub Download](https://img.shields.io/github/v/release/huyho08/StudentOrganizer?label=Download)](https://github.com/huyho08/StudentOrganizer/releases)
 
 ## Inquiries
 
@@ -26,6 +24,8 @@ To contact me, please email hh6@yvg.vic.edu.au , or you can open an issue within
 ---
 
 ## Installation & Loading in Chrome (Developer Mode)
+
+[![GitHub Download](https://img.shields.io/github/v/release/huyho08/StudentOrganizer?label=Download)](https://github.com/huyho08/StudentOrganizer/releases)
 
 To test or load the extension locally in Chrome:
 
@@ -48,5 +48,5 @@ To test or load the extension locally in Chrome:
 
 
 ## License
-
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](https://opensource.org/licenses/MIT)
 This software is licensed under the MIT License. See the [LICENSE](https://github.com/huyho08/StudentOrganizer/blob/main/LICENSE) file for more details. 
