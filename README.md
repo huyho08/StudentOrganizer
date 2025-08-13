@@ -40,4 +40,4 @@ To test or load the extension locally in Chrome:
 
 ## License
 
-This software is licensed under the MIT License. See the LICENSE(https://github.com/huyho08/StudentOrganizer/blob/main/LICENSE) file for more details. 
+This software is licensed under the MIT License. See the [LICENSE](https://github.com/huyho08/StudentOrganizer/blob/main/LICENSE) file for more details. 
