@@ -32,6 +32,12 @@ To test or load the extension locally in Chrome:
    Click the **Load unpacked** button and select the folder where your extension files are extracted.
 
 
-Copyright (c) 2025 Huy Ho
+#### Contributors
 
-This source code is licensed under the MIT license found in the LICENSE file in the root directory of this source tree.
+- [Huy Ho](https://github.com/huyho08)
+- [Maximo Flamminger](https://github.com/Bhaali)
+
+
+## License
+
+This software is licensed under the MIT License. See the LICENSE(https://github.com/huyho08/StudentOrganizer/blob/main/LICENSE) file for more details. 
