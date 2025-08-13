@@ -3,7 +3,7 @@
 **StudentOrganizer** is an all-in-one student organizer helper designed to boost productivity and keep students on track. This Chrome extension helps you manage events, deadlines, and reminders all in one convenient place within your browser.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](https://opensource.org/licenses/MIT)
-[![GitHub release](https://img.shields.io/github/v/release/huyho08/StudentOrganizer?label=release)](https://github.com/huyho08/StudentOrganizer/releases)
+[![GitHub Download](https://img.shields.io/github/v/release/huyho08/StudentOrganizer?label=release)](https://github.com/huyho08/StudentOrganizer/releases)
 
 
 
