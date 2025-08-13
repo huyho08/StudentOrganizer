@@ -2,7 +2,7 @@
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.action === 'createEvent') {
 
-    const clientId = 'YOUR_AZURE_APP_CLIENT_ID'; // this does not work
+    const clientId = ''; // this does not work unfortunately
     const redirectUri = chrome.identity.getRedirectURL('oauth2');
     const scopes = 'openid profile offline_access Calendars.ReadWrite';
     const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
