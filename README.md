@@ -49,4 +49,5 @@ To test or load the extension locally in Chrome:
 
 ## License
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](https://opensource.org/licenses/MIT)
+
 This software is licensed under the MIT License. See the [LICENSE](https://github.com/huyho08/StudentOrganizer/blob/main/LICENSE) file for more details. 
